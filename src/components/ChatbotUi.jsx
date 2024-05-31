@@ -5,7 +5,25 @@ import MoodIcon from '@mui/icons-material/Mood';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import CodeIcon from '@mui/icons-material/Code';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
+const theme = createTheme({
+    components: {
+        MuiCheckbox: {
+            styleOverrides: {
+                root: {
+                    '&.Mui-checked': {
+                        color: '#FFFFFF',
+                        '& .MuiSvgIcon-root': {
+                            backgroundColor: '#000000',
+                            borderRadius: '50%',
+                        }
+                    }
+                }
+            }
+        }
+    }
+});
 const suggestions = [
     { text: "Help me craft an OOO message based on a few details", icon: <MoodIcon /> },
     { text: "Recommend new types of water sports, including pros & cons", icon: <FitnessCenterIcon /> },
@@ -65,6 +83,8 @@ const ChatbotUI = () => {
     };
 
     return (
+        <ThemeProvider theme={theme}>
+
         <Container
             maxWidth={false}
             sx={{
@@ -82,7 +102,7 @@ const ChatbotUI = () => {
         >
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                 <img src={`${process.env.PUBLIC_URL}/Heybee.svg`}  alt="Chatbot Logo" style={{ height: '40px', marginRight: '10px' }} />
-                <Typography variant="h4" sx={{ fontWeight: 600, fontFamily: "'Inter Tight', sans-serif;" }}>heybee</Typography>
+                <Typography variant="h4" sx={{fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
             </Box>
             <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
                 {suggestions.map((suggestion, index) => (
@@ -166,22 +186,25 @@ const ChatbotUI = () => {
                         },
                     }}
                 />
+
                 <IconButton color="primary" onClick={handleSend} sx={{ color: '#000000' }}>
                     <SendIcon />
                 </IconButton>
             </Box>
             <FormControlLabel
-                control={
-                    <Checkbox
-                        checked={includeWebAccess}
-                        onChange={(e) => setIncludeWebAccess(e.target.checked)}
-                        color="primary"
-                    />
-                }
-                label="Include web access"
-                sx={{ marginTop: 2 }}
-            />
+                    control={
+                        <Checkbox
+                            checked={includeWebAccess}
+                            onChange={(e) => setIncludeWebAccess(e.target.checked)}
+                            color="primary"
+                        />
+                    }
+                    label="Include web access"
+                    sx={{ marginTop: 2 }}
+                />
         </Container>
+        </ThemeProvider>
+
     );
 };
 
