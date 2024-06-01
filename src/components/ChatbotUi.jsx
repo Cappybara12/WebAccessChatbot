@@ -200,7 +200,7 @@ const ChatbotUI = () => {
                         />
                     }
                     label="Include web access"
-                    sx={{ marginTop: 1 }}
+                    sx={{ marginTop: 0 }}
                 />
         </Container>
         </ThemeProvider>
