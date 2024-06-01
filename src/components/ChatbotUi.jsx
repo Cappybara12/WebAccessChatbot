@@ -16,7 +16,7 @@ const theme = createTheme({
                         color: '#FFFFFF',
                         '& .MuiSvgIcon-root': {
                             backgroundColor: '#000000',
-                            borderRadius: '50%',
+                            borderRadius: '30%',
                         }
                     }
                 }
