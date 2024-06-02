@@ -101,7 +101,7 @@ const ChatbotUI = () => {
             }}
         >
             <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`}  alt="Chatbot Logo" style={{ height: '40px', marginRight: '10px' }} />
+                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`}  alt="Chatbot Logo" style={{ height: '40px', marginRight: '0px' }} />
                 <Typography variant="h4" sx={{fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
             </Box>
             <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
