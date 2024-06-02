@@ -150,7 +150,7 @@ const ChatbotUI = () => {
                 {messages.map((msg, index) => (
                     <Box key={index} sx={{ marginBottom: 2 }}>
                         <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
-                        <Typography variant="body1"><strong>Bot:</strong> {msg.bot}</Typography>
+                        <Typography variant="body1"><strong>Bee:</strong> {msg.bot}</Typography>
                     </Box>
                 ))}
                 {isLoading && (
