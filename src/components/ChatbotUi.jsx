@@ -167,7 +167,7 @@ const ChatbotUI = () => {
                             <Typography variant="body1"><strong>Bee:</strong> {msg.bot}</Typography>
                             {msg.sources && (
                                 <Box sx={{ marginTop: 1 }}>
-                                    <Typography variant="body2"><strong>Sources:</strong></Typography>
+                                    <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
                                     <Button
                                         aria-controls={`sources-menu-${index}`}
                                         aria-haspopup="true"
@@ -185,7 +185,7 @@ const ChatbotUI = () => {
                                         PaperProps={{
                                             style: {
                                                 maxHeight: '300px',
-                                                width: '300px',
+                                                width: '400px', // Increased the width
                                             },
                                         }}
                                     >
@@ -238,6 +238,7 @@ const ChatbotUI = () => {
                         <SendIcon />
                     </IconButton>
                 </Box>
+
                 <FormControlLabel
                     control={
                         <Checkbox
