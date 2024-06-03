@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -173,7 +174,7 @@ const ChatbotUI = () => {
                                         aria-haspopup="true"
                                         onClick={(event) => handleMenuClick(event, msg.sources)}
                                         endIcon={<ExpandMoreIcon />}
-                                        sx={{ textTransform: 'none', color: '#0000EE' }}
+                                        sx={{ textTransform: 'none', color: '#000000' }} // Changed link color to black
                                     >
                                         {msg.sources[0].title}
                                     </Button>
@@ -185,13 +186,13 @@ const ChatbotUI = () => {
                                         PaperProps={{
                                             style: {
                                                 maxHeight: '300px',
-                                                width: '400px', // Increased the width
+                                                width: '400px',
                                             },
                                         }}
                                     >
                                         {currentSources.map((source, sourceIndex) => (
                                             <MenuItem key={sourceIndex} onClick={handleMenuClose}>
-                                                <Typography variant="body2" component="a" href={source.url} target="_blank" sx={{ textDecoration: 'none', color: '#0000EE' }}>
+                                                <Typography variant="body2" component="a" href={source.url} target="_blank" sx={{ textDecoration: 'none', color: '#3ABEF9' }}> {/* Changed link color to black */}
                                                     {sourceIndex + 1}. {source.title}
                                                 </Typography>
                                             </MenuItem>
