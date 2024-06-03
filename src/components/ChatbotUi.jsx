@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -185,14 +184,16 @@ const ChatbotUI = () => {
                                         onClose={handleMenuClose}
                                         PaperProps={{
                                             style: {
-                                                maxHeight: '300px',
+                                                maxHeight: '100px', // Display only 2 links at a time
                                                 width: '400px',
+                                                borderRadius: '10px', // Rounded edges
+                                                boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
                                             },
                                         }}
                                     >
                                         {currentSources.map((source, sourceIndex) => (
                                             <MenuItem key={sourceIndex} onClick={handleMenuClose}>
-                                                <Typography variant="body2" component="a" href={source.url} target="_blank" sx={{ textDecoration: 'none', color: '#3ABEF9' }}> {/* Changed link color to black */}
+                                                <Typography variant="body2" component="a" href={source.url} target="_blank" sx={{ textDecoration: 'underline', textDecorationColor: '#3ABEF9', color: '#3ABEF9' }}>
                                                     {sourceIndex + 1}. {source.title}
                                                 </Typography>
                                             </MenuItem>
@@ -209,7 +210,7 @@ const ChatbotUI = () => {
                         </Box>
                     )}
                 </Paper>
-                <Box sx={{ display: 'flex', width: '100%', maxWidth: '800px', bgcolor: '#F1F1F1', padding: '10px', borderRadius: '20px', boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)' }}>
+                <Box sx={{ display: 'flex', width: '100%', maxWidth: '800px', bgcolor: '#0000', padding: '10px', borderRadius: '20px', boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)' }}>
                     <TextField
                         fullWidth
                         variant="outlined"
