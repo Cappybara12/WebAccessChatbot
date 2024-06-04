@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem } from '@mui/material';
+import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem , InputAdornment} from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MoodIcon from '@mui/icons-material/Mood';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -27,7 +27,7 @@ const theme = createTheme({
 });
 
 const suggestions = [
-    { text: "Help me craft an OOO message based on a few details", icon: <MoodIcon /> },
+    { text: "Help me craft a polite message based on a few details", icon: <MoodIcon /> },
     { text: "Recommend new types of water sports, including pros & cons", icon: <FitnessCenterIcon /> },
     { text: "Give me phrases to learn a new language", icon: <TravelExploreIcon /> },
     { text: "Improve the readability of the following code", icon: <CodeIcon /> }
@@ -151,7 +151,7 @@ const ChatbotUI = () => {
                         flex: 1,
                         width: '100%',
                         maxWidth: '800px',
-                        maxHeight: '50vh',
+                        maxHeight: '38vh',
                         overflowY: 'auto',
                         marginBottom: 2,
                         padding: 2,
@@ -186,7 +186,7 @@ const ChatbotUI = () => {
                                             style: {
                                                 maxHeight: '100px', // Display only 2 links at a time
                                                 width: '400px',
-                                                borderRadius: '10px', // Rounded edges
+                                                borderRadius: '30px', // Rounded edges
                                                 boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
                                             },
                                         }}
@@ -218,6 +218,22 @@ const ChatbotUI = () => {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Enter a prompt here"
                         InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={includeWebAccess}
+                                                onChange={(e) => setIncludeWebAccess(e.target.checked)}
+                                                color="primary"
+                                                size="small"
+                                            />
+                                        }
+                                        label="Include Web access"
+                                        sx={{ marginRight: '8px', color: '#000000' }}
+                                    />
+                                </InputAdornment>
+                            ),
                             style: { color: '#000000' },
                         }}
                         sx={{
@@ -241,7 +257,7 @@ const ChatbotUI = () => {
                     </IconButton>
                 </Box>
 
-                <FormControlLabel
+                {/* <FormControlLabel
                     control={
                         <Checkbox
                             checked={includeWebAccess}
@@ -251,7 +267,7 @@ const ChatbotUI = () => {
                     }
                     label="Include web access"
                     sx={{ marginTop: 0 }}
-                />
+                /> */}
             </Container>
         </ThemeProvider>
     );
