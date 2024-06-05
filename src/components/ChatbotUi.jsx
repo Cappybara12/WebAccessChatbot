@@ -249,7 +249,7 @@ const ChatbotUI = () => {
                             color="primary"
                         />
                     }
-                    label="Include web access"
+                    label="Web Sources"
                     sx={{ marginTop: 0 }}
                 />
             </Container>
