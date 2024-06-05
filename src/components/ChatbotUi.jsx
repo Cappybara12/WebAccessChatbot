@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem , InputAdornment} from '@mui/material';
+import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem} from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MoodIcon from '@mui/icons-material/Mood';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -218,22 +218,6 @@ const ChatbotUI = () => {
                         onChange={(e) => setInput(e.target.value)}
                         placeholder="Enter a prompt here"
                         InputProps={{
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={includeWebAccess}
-                                                onChange={(e) => setIncludeWebAccess(e.target.checked)}
-                                                color="primary"
-                                                size="small"
-                                            />
-                                        }
-                                        label="Include Web access"
-                                        sx={{ marginRight: '8px', color: '#000000' }}
-                                    />
-                                </InputAdornment>
-                            ),
                             style: { color: '#000000' },
                         }}
                         sx={{
@@ -257,7 +241,7 @@ const ChatbotUI = () => {
                     </IconButton>
                 </Box>
 
-                {/* <FormControlLabel
+                <FormControlLabel
                     control={
                         <Checkbox
                             checked={includeWebAccess}
@@ -267,7 +251,7 @@ const ChatbotUI = () => {
                     }
                     label="Include web access"
                     sx={{ marginTop: 0 }}
-                /> */}
+                />
             </Container>
         </ThemeProvider>
     );
