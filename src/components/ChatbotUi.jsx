@@ -7,7 +7,6 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-
 const theme = createTheme({
     components: {
         MuiCheckbox: {
@@ -115,8 +114,7 @@ const ChatbotUI = () => {
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '-8px' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
+                    <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '50px', marginRight: '-8px' }} />
                 </Box>
                 <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
                     {suggestions.map((suggestion, index) => (
@@ -164,7 +162,11 @@ const ChatbotUI = () => {
                     {messages.map((msg, index) => (
                         <Box key={index} sx={{ marginBottom: 2 }}>
                             <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
-                            <Typography variant="body1"><strong>Bee:</strong> {msg.bot}</Typography>
+                            <Typography variant="body1" >
+                                <img src={`${process.env.PUBLIC_URL}/beee.svg`} alt="Bee Icon" style={{ height: '40px', marginRight: '0px' ,marginBottom:'-10px'}} /><span>:</span> {msg.bot}
+                            </Typography>
+
+                            {/* <Typography variant="body1"><strong>Bee:</strong> {msg.bot}</Typography> */}
                             {msg.sources && (
                                 <Box sx={{ marginTop: 1 }}>
                                     <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
