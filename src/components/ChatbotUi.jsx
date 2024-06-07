@@ -163,7 +163,7 @@ const ChatbotUI = () => {
                         <Box key={index} sx={{ marginBottom: 2 }}>
                             <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
                             <Typography variant="body1" >
-                                <img src={`${process.env.PUBLIC_URL}/beee.svg`} alt="Bee Icon" style={{ height: '40px', marginRight: '0px' ,marginBottom:'-10px'}} /><span>:</span> {msg.bot}
+                                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px' ,marginBottom:'-10px'}} /><span>:</span> {msg.bot}
                             </Typography>
 
                             {/* <Typography variant="body1"><strong>Bee:</strong> {msg.bot}</Typography> */}
