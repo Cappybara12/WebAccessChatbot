@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem} from '@mui/material';
+import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MoodIcon from '@mui/icons-material/Mood';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
@@ -7,6 +7,7 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+
 const theme = createTheme({
     components: {
         MuiCheckbox: {
@@ -113,8 +114,9 @@ const ChatbotUI = () => {
                     fontFamily: "'Titillium Web', sans-serif"
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
                     <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '50px', marginRight: '-8px' }} />
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '10px', fontWeight: 'bold' }}>"A Knowledge Engine for the World"</Typography>
                 </Box>
                 <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
                     {suggestions.map((suggestion, index) => (
@@ -162,11 +164,9 @@ const ChatbotUI = () => {
                     {messages.map((msg, index) => (
                         <Box key={index} sx={{ marginBottom: 2 }}>
                             <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
-                            <Typography variant="body1" >
-                                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px' ,marginBottom:'-10px'}} /><span>:</span> {msg.bot}
+                            <Typography variant="body1">
+                                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px', marginBottom: '-10px' }} /><span>:</span> {msg.bot}
                             </Typography>
-
-                            {/* <Typography variant="body1"><strong>Bee:</strong> {msg.bot}</Typography> */}
                             {msg.sources && (
                                 <Box sx={{ marginTop: 1 }}>
                                     <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
@@ -212,37 +212,62 @@ const ChatbotUI = () => {
                         </Box>
                     )}
                 </Paper>
-                <Box sx={{ display: 'flex', width: '100%', maxWidth: '800px', bgcolor: '#0000', padding: '10px', borderRadius: '20px', boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)' }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        width: '100%',
+                        maxWidth: '800px',
+                        bgcolor: '#FFFFFF',
+                        padding: '10px',
+                        borderRadius: '20px',
+                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid #000000', // Border around the input and button container
+                    }}
+                >
                     <TextField
                         fullWidth
                         variant="outlined"
+                        placeholder="Ask a question..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        placeholder="Enter a prompt here"
-                        InputProps={{
-                            style: { color: '#000000' },
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                                handleSend();
+                            }
                         }}
                         sx={{
-                            input: { color: '#000000' },
-                            '.MuiOutlinedInput-root': {
+                            bgcolor: '#F9F9F9',
+                            borderRadius: '10px',
+                            '& .MuiOutlinedInput-root': {
                                 '& fieldset': {
-                                    borderColor: '#CCCCCC',
-                                    borderRadius: '20px'
+                                    borderColor: 'transparent',
                                 },
                                 '&:hover fieldset': {
-                                    borderColor: '#AAAAAA',
+                                    borderColor: 'transparent',
                                 },
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#888888',
+                                    borderColor: 'transparent',
                                 },
                             },
                         }}
                     />
-                    <IconButton color="primary" onClick={handleSend} sx={{ color: '#000000' }}>
+                    <IconButton
+                        onClick={handleSend}
+                        disabled={!input.trim()}
+                        sx={{
+                            ml: 1,
+                            bgcolor: input.trim() ? '#000000' : '#B0B0B0',
+                            color: '#FFFFFF',
+                            '&:hover': {
+                                bgcolor: input.trim() ? '#333333' : '#B0B0B0',
+                            },
+                            borderRadius: '10px',
+                            border: '1px solid #000000', // Black border for 3D effect
+                        }}
+                    >
                         <SendIcon />
                     </IconButton>
                 </Box>
-
                 <FormControlLabel
                     control={
                         <Checkbox
@@ -255,6 +280,17 @@ const ChatbotUI = () => {
                     sx={{ marginTop: 0 }}
                 />
             </Container>
+                    {/* <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={includeWebAccess}
+                                onChange={(e) => setIncludeWebAccess(e.target.checked)}
+                                sx={{ color: '#FFFFFF' }}
+                            />
+                        }
+                        label="Include web access"
+                        sx={{ ml: 1 }}
+                    /> */}
         </ThemeProvider>
     );
 };

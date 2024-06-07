@@ -8,7 +8,7 @@ const Navbar = () => {
             <Toolbar>
                 <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                     <img src={`${process.env.PUBLIC_URL}/heybooFav.jpg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '8px' }} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
                 </Box>
                 <Button component={Link} to="/" sx={{ color: '#FFFFFF', textTransform: 'none' }}>Home</Button>
                 <Button component={Link} to="/about" sx={{ color: '#FFFFFF', textTransform: 'none' }}>About</Button>
