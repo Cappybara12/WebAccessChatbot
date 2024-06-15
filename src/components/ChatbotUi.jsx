@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem } from '@mui/material';
+import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem, Modal, List, ListItem, ListItemText, InputBase } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import MoodIcon from '@mui/icons-material/Mood';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+
 
 const theme = createTheme({
     components: {
@@ -32,15 +34,23 @@ const suggestions = [
     { text: "Give me phrases to learn a new language", icon: <TravelExploreIcon /> },
     { text: "Improve the readability of the following code", icon: <CodeIcon /> }
 ];
-
+const languages = [
+    "Auto-detect", "English (US)", "አማርኛ", "العربية", "български", "বাংলা", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", // Add all 133 languages here
+    ];
+    
+    
 const ChatbotUI = () => {
-    const [input, setInput] = useState('');
-    const [includeWebAccess, setIncludeWebAccess] = useState(false);
-    const [messages, setMessages] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [currentSources, setCurrentSources] = useState([]);
-
+        const [input, setInput] = useState('');
+        const [includeWebAccess, setIncludeWebAccess] = useState(false);
+        const [messages, setMessages] = useState([]);
+        const [isLoading, setIsLoading] = useState(false);
+        const [anchorEl, setAnchorEl] = useState(null);
+        const [currentSources, setCurrentSources] = useState([]);
+        const [language, setLanguage] = useState('Auto-detect');
+        const [modalOpen, setModalOpen] = useState(false);
+        const [search, setSearch] = useState('');
+    
+        
     const handleSend = async () => {
         if (!input.trim()) return;
 
@@ -86,17 +96,34 @@ const ChatbotUI = () => {
     const handleSuggestionClick = (suggestion) => {
         setInput(suggestion);
     };
-
+    
     const handleMenuClick = (event, sources) => {
         setAnchorEl(event.currentTarget);
         setCurrentSources(sources);
     };
-
+    
     const handleMenuClose = () => {
         setAnchorEl(null);
         setCurrentSources([]);
     };
-
+    
+    const handleLanguageClick = () => {
+        setModalOpen(true);
+    };
+    
+    const handleLanguageSelect = (lang) => {
+        setLanguage(lang);
+        setModalOpen(false);
+    };
+    
+    const handleSearchChange = (event) => {
+        setSearch(event.target.value);
+    };
+    
+    const filteredLanguages = languages.filter((lang) =>
+        lang.toLowerCase().includes(search.toLowerCase())
+    );
+    
     return (
         <ThemeProvider theme={theme}>
             <Container
@@ -114,10 +141,61 @@ const ChatbotUI = () => {
                     fontFamily: "'Titillium Web', sans-serif"
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
-                    <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '50px', marginRight: '-8px' }} />
-                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '10px', fontWeight: 'bold' }}>"A Knowledge Engine for the World"</Typography>
-                </Box>
+<Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {/* <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '50px', marginRight: '-px' }} /> */}
+        <Typography variant="h1" sx={{ fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
+    </Box>
+
+    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '10px', fontWeight: 'bold' ,fontFamily: "Roboto Condensed, sans-serif"  }}>"A Knowledge Engine for the World"</Typography>
+</Box>
+{/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
+  <IconButton
+    onClick={handleLanguageClick}
+    sx={{
+      color: '#000000',
+      backgroundColor: 'transparent',
+      border: '1px solid black',
+      borderRadius: '4px',
+      padding: '8px',
+      '&:hover': {
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+      },
+    }}
+  >
+    <SettingsIcon />
+    <Typography variant="body2" sx={{ ml: 1 }}>
+      Select Language
+    </Typography>
+  </IconButton>
+</Box>            <Modal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+                <Paper sx={{ width: 300, maxHeight: '80vh', overflowY: 'auto', padding: 2, borderRadius: '10px' }}>
+                    <Typography variant="h6" sx={{ marginBottom: 2 }}>Select Language</Typography>
+                    <InputBase
+                        placeholder="Search languages..."
+                        value={search}
+                        onChange={handleSearchChange}
+                        sx={{
+                            width: '100%',
+                            padding: '10px',
+                            marginBottom: '10px',
+                            bgcolor: '#F1F1F1',
+                            borderRadius: '10px',
+                        }}
+                    />
+                    <List>
+                        {filteredLanguages.map((lang, index) => (
+                            <ListItem button onClick={() => handleLanguageSelect(lang)} key={index}>
+                                <ListItemText primary={lang} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Paper>
+            </Modal> */}
                 <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
                     {suggestions.map((suggestion, index) => (
                         <Grid item xs={12} sm={6} md={3} key={index}>
@@ -141,7 +219,7 @@ const ChatbotUI = () => {
                                 onClick={() => handleSuggestionClick(suggestion.text)}
                             >
                                 {suggestion.icon}
-                                <Typography variant="body2" sx={{ marginTop: '10px' }}>{suggestion.text}</Typography>
+                                <Typography variant="body2" sx={{ marginTop: '10px', fontFamily: "Roboto Condensed, sans-serif" }}>{suggestion.text}</Typography>
                             </Button>
                         </Grid>
                     ))}
