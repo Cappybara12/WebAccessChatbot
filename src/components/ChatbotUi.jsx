@@ -9,7 +9,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-
 const theme = createTheme({
     components: {
         MuiCheckbox: {
@@ -34,28 +33,43 @@ const suggestions = [
     { text: "Give me phrases to learn a new language", icon: <TravelExploreIcon /> },
     { text: "Improve the readability of the following code", icon: <CodeIcon /> }
 ];
+
 const languages = [
-    "Auto-detect", "English (US)", "አማርኛ", "العربية", "български", "বাংলা", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", "bosanski", // Add all 133 languages here
-    ];
-    
-    
+    "Auto-detect",
+    "Afrikaans", "Albanian", "Amharic", "Arabic", "Armenian", "Assamese", "Aymara", "Azerbaijani", 
+    "Bambara", "Basque", "Belarusian", "Bengali", "Bhojpuri", "Bosnian", "Bulgarian", "Catalan", "Cebuano", 
+    "Chinese (Simplified)", "Chinese (Traditional)", "Corsican", "Croatian", "Czech", "Danish", "Dhivehi", 
+    "Dogri", "Dutch", "English", "Esperanto", "Estonian", "Ewe", "Filipino (Tagalog)", "Finnish", "French", 
+    "Frisian", "Galician", "Georgian", "German", "Greek", "Guarani", "Gujarati", "Haitian Creole", "Hausa", 
+    "Hawaiian", "Hebrew", "Hindi", "Hmong", "Hungarian", "Icelandic", "Igbo", "Ilocano", "Indonesian", 
+    "Irish", "Italian", "Japanese", "Javanese", "Kannada", "Kazakh", "Khmer", "Kinyarwanda", "Konkani", 
+    "Korean", "Krio", "Kurdish", "Kurdish (Sorani)", "Kyrgyz", "Lao", "Latin", "Latvian", "Lingala", 
+    "Lithuanian", "Luganda", "Luxembourgish", "Macedonian", "Maithili", "Malagasy", "Malay", "Malayalam", 
+    "Maltese", "Maori", "Marathi", "Meiteilon (Manipuri)", "Mizo", "Mongolian", "Myanmar (Burmese)", 
+    "Nepali", "Norwegian", "Nyanja (Chichewa)", "Odia (Oriya)", "Oromo", "Pashto", "Persian", "Polish", 
+    "Portuguese (Portugal, Brazil)", "Punjabi", "Quechua", "Romanian", "Russian", "Samoan", "Sanskrit", 
+    "Scots Gaelic", "Sepedi", "Serbian", "Sesotho", "Shona", "Sindhi", "Sinhala (Sinhalese)", "Slovak", 
+    "Slovenian", "Somali", "Spanish", "Sundanese", "Swahili", "Swedish", "Tagalog (Filipino)", "Tajik", 
+    "Tamil", "Tatar", "Telugu", "Thai", "Tigrinya", "Tsonga", "Turkish", "Turkmen", "Twi (Akan)", 
+    "Ukrainian", "Urdu", "Uyghur", "Uzbek", "Vietnamese", "Welsh", "Xhosa", "Yiddish", "Yoruba", "Zulu"
+];
+
 const ChatbotUI = () => {
-        const [input, setInput] = useState('');
-        const [includeWebAccess, setIncludeWebAccess] = useState(false);
-        const [messages, setMessages] = useState([]);
-        const [isLoading, setIsLoading] = useState(false);
-        const [anchorEl, setAnchorEl] = useState(null);
-        const [currentSources, setCurrentSources] = useState([]);
-        const [language, setLanguage] = useState('Auto-detect');
-        const [modalOpen, setModalOpen] = useState(false);
-        const [search, setSearch] = useState('');
-    
-        
+    const [input, setInput] = useState('');
+    const [includeWebAccess, setIncludeWebAccess] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [currentSources, setCurrentSources] = useState([]);
+    const [language, setLanguage] = useState('Auto-detect');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [search, setSearch] = useState('');
+
     const handleSend = async () => {
         if (!input.trim()) return;
 
         try {
-            const requestData = { query: input, include_web_access: includeWebAccess };
+            const requestData = { query: input, include_web_access: includeWebAccess, language: language };
             const requestBody = JSON.stringify({ body: JSON.stringify(requestData) });
             console.log('Request body:', requestBody);
 
@@ -96,34 +110,34 @@ const ChatbotUI = () => {
     const handleSuggestionClick = (suggestion) => {
         setInput(suggestion);
     };
-    
+
     const handleMenuClick = (event, sources) => {
         setAnchorEl(event.currentTarget);
         setCurrentSources(sources);
     };
-    
+
     const handleMenuClose = () => {
         setAnchorEl(null);
         setCurrentSources([]);
     };
-    
+
     const handleLanguageClick = () => {
         setModalOpen(true);
     };
-    
+
     const handleLanguageSelect = (lang) => {
         setLanguage(lang);
         setModalOpen(false);
     };
-    
+
     const handleSearchChange = (event) => {
         setSearch(event.target.value);
     };
-    
+
     const filteredLanguages = languages.filter((lang) =>
         lang.toLowerCase().includes(search.toLowerCase())
     );
-    
+
     return (
         <ThemeProvider theme={theme}>
             <Container
@@ -141,61 +155,61 @@ const ChatbotUI = () => {
                     fontFamily: "'Titillium Web', sans-serif"
                 }}
             >
-<Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        {/* <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '50px', marginRight: '-px' }} /> */}
-        <Typography variant="h1" sx={{ fontWeight: 700, fontFamily: "'Lobster Two', sans-serif;" }}>heybee</Typography>
-    </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}> 
 
-    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '10px', fontWeight: 'bold' ,fontFamily: "Roboto Condensed, sans-serif"  }}>"A Knowledge Engine for the World"</Typography>
-</Box>
-{/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
-  <IconButton
-    onClick={handleLanguageClick}
-    sx={{
-      color: '#000000',
-      backgroundColor: 'transparent',
-      border: '1px solid black',
-      borderRadius: '4px',
-      padding: '8px',
-      '&:hover': {
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-      },
-    }}
-  >
-    <SettingsIcon />
-    <Typography variant="body2" sx={{ ml: 1 }}>
-      Select Language
-    </Typography>
-  </IconButton>
-</Box>            <Modal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-                <Paper sx={{ width: 300, maxHeight: '80vh', overflowY: 'auto', padding: 2, borderRadius: '10px' }}>
-                    <Typography variant="h6" sx={{ marginBottom: 2 }}>Select Language</Typography>
-                    <InputBase
-                        placeholder="Search languages..."
-                        value={search}
-                        onChange={handleSearchChange}
+                        <Typography variant="h1" sx={{ fontWeight: 700, fontFamily: "'hobo-std', sans-serif;" }}>HeyBee</Typography>
+                    </Box>
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '10px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"A Knowledge Engine for the World"</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
+                    <IconButton
+                        onClick={handleLanguageClick}
                         sx={{
-                            width: '100%',
-                            padding: '10px',
-                            marginBottom: '10px',
-                            bgcolor: '#F1F1F1',
-                            borderRadius: '10px',
+                            color: '#000000',
+                            backgroundColor: 'transparent',
+                            border: '1px solid black',
+                            borderRadius: '4px',
+                            padding: '8px',
+                            '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                            },
                         }}
-                    />
-                    <List>
-                        {filteredLanguages.map((lang, index) => (
-                            <ListItem button onClick={() => handleLanguageSelect(lang)} key={index}>
-                                <ListItemText primary={lang} />
-                            </ListItem>
-                        ))}
-                    </List>
-                </Paper>
-            </Modal> */}
+                    >
+                        <SettingsIcon />
+                        <Typography variant="body2" sx={{ ml: 1 }}>
+                            Select Language ({language})
+                        </Typography>
+                    </IconButton>
+                </Box>
+                <Modal
+                    open={modalOpen}
+                    onClose={() => setModalOpen(false)}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                    <Paper sx={{ width: 300, maxHeight: '80vh', overflowY: 'auto', padding: 2, borderRadius: '10px' }}>
+                        <Typography variant="h6" sx={{ marginBottom: 2 }}>Select Language</Typography>
+                        <InputBase
+                            placeholder="Search languages..."
+                            value={search}
+                            onChange={handleSearchChange}
+                            sx={{
+                                width: '100%',
+                                padding: '10px',
+                                marginBottom: '10px',
+                                bgcolor: '#F1F1F1',
+                                borderRadius: '10px',
+                            }}
+                        />
+                        <List>
+                            {filteredLanguages.map((lang, index) => (
+                                <ListItem button onClick={() => handleLanguageSelect(lang)} key={index}>
+                                    <ListItemText primary={lang} />
+                                </ListItem>
+                            ))}
+                        </List>
+                    </Paper>
+                </Modal>
                 <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
                     {suggestions.map((suggestion, index) => (
                         <Grid item xs={12} sm={6} md={3} key={index}>
@@ -358,17 +372,6 @@ const ChatbotUI = () => {
                     sx={{ marginTop: 0 }}
                 />
             </Container>
-                    {/* <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={includeWebAccess}
-                                onChange={(e) => setIncludeWebAccess(e.target.checked)}
-                                sx={{ color: '#FFFFFF' }}
-                            />
-                        }
-                        label="Include web access"
-                        sx={{ ml: 1 }}
-                    /> */}
         </ThemeProvider>
     );
 };
