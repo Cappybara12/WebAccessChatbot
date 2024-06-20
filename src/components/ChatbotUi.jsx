@@ -77,7 +77,7 @@ const ChatbotUI = () => {
             setInput('');
             setIsLoading(true);
 
-            const response = await fetch('https://mxewm1uisc.execute-api.ap-south-1.amazonaws.com/prod/query', {
+            const response = await fetch('https://iu91dk9rh3.execute-api.ap-south-1.amazonaws.com/prod/query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,10 +157,11 @@ const ChatbotUI = () => {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
+                        <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>hey</Typography>
+                        <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ marginLeft: '-5px', width: '89px', height: '100px' }} />
 
-                        <Typography variant="h1" sx={{ fontWeight: 700, fontFamily: "'hobo-std', sans-serif;" }}>HeyBee</Typography>
                     </Box>
-                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '10px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"A Knowledge Engine for the World"</Typography>
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '15px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"A Knowledge Engine for the World"</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
                     <IconButton
