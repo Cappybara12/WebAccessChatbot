@@ -155,13 +155,12 @@ const ChatbotUI = () => {
                     fontFamily: "'Titillium Web', sans-serif"
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
-                        <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>hey</Typography>
-                        <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ marginLeft: '-5px', width: '89px', height: '100px' }} />
-
+                        {/* <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>hey</Typography> */}
+                        <img src={`${process.env.PUBLIC_URL}/file.png`} alt="Heybee Logo" style={{ position:'relative' ,top:'-51px'  , marginLeft: '-31px', width: '257px', height: '188px' }} />
                     </Box>
-                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '15px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"A Knowledge Engine for the World"</Typography>
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-70px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"A Knowledge Engine for the World"</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
                     <IconButton
