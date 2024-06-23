@@ -308,7 +308,7 @@ const ChatbotUI = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '30px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
                     <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>{heyText}</Typography>
-                    <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-51px'  , marginLeft: '-31px', width: '150px', height: '70px' }} />
+                    <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'5px'  , marginLeft: '-31px', width: '150px', height: '70px' }} />
                     </Box>
                     <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '30px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask anything, it just works"</Typography>
                 </Box>
