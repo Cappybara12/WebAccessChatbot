@@ -64,7 +64,14 @@ const ChatbotUI = () => {
     const [language, setLanguage] = useState('Auto-detect');
     const [modalOpen, setModalOpen] = useState(false);
     const [search, setSearch] = useState('');
+    const [heyText, setHeyText] = useState('hey');
 
+    const handleLanguageSelect = (lang) => {
+        setLanguage(lang);
+        translateHey(lang);
+        setModalOpen(false);
+    };
+    
     const handleSend = async () => {
         if (!input.trim()) return;
 
@@ -106,7 +113,150 @@ const ChatbotUI = () => {
             setIsLoading(false);
         }
     };
-
+    const translations = {
+        "Afrikaans": "hallo",
+        "Albanian": "hej",
+        "Amharic": "ሰላም",
+        "Arabic": "يا",
+        "Armenian": "բարև",
+        "Assamese": "হাই",
+        "Aymara": "jichha",
+        "Azerbaijani": "salam",
+        "Bambara": "ka kɛnɛ",
+        "Basque": "kaixo",
+        "Belarusian": "прывітанне",
+        "Bengali": "ওহে",
+        "Bhojpuri": "प्रणाम",
+        "Bosnian": "zdravo",
+        "Bulgarian": "здрасти",
+        "Catalan": "hola",
+        "Cebuano": "hello",
+        "Chinese (Simplified)": "嘿",
+        "Chinese (Traditional)": "嘿",
+        "Corsican": "bonghjornu",
+        "Croatian": "hej",
+        "Czech": "ahoj",
+        "Danish": "hej",
+        "Dhivehi": "ހެޔެ",
+        "Dogri": "नमस्कार",
+        "Dutch": "hallo",
+        "English": "hey",
+        "Esperanto": "saluton",
+        "Estonian": "tere",
+        "Ewe": "e",
+        "Filipino (Tagalog)": "hello",
+        "Finnish": "hei",
+        "French": "salut",
+        "Frisian": "hallo",
+        "Galician": "ola",
+        "Georgian": "გამარჯობა",
+        "German": "hallo",
+        "Greek": "γειά",
+        "Guarani": "mba’éichapa",
+        "Gujarati": "હાય",
+        "Haitian Creole": "alo",
+        "Hausa": "sannu",
+        "Hawaiian": "aloha",
+        "Hebrew": "היי",
+        "Hindi": "नमस्ते",
+        "Hmong": "nyob zoo",
+        "Hungarian": "szia",
+        "Icelandic": "hæ",
+        "Igbo": "ndewo",
+        "Ilocano": "hello",
+        "Indonesian": "halo",
+        "Irish": "dia dhuit",
+        "Italian": "ciao",
+        "Japanese": "こんにちは",
+        "Javanese": "halo",
+        "Kannada": "ಹಾಯ್",
+        "Kazakh": "сәлем",
+        "Khmer": "សួស្ដី",
+        "Kinyarwanda": "muraho",
+        "Konkani": "नमस्कार",
+        "Korean": "안녕하세요",
+        "Krio": "hello",
+        "Kurdish": "slav",
+        "Kurdish (Sorani)": "slav",
+        "Kyrgyz": "салам",
+        "Lao": "ສະບາຍດີ",
+        "Latin": "salve",
+        "Latvian": "sveiki",
+        "Lingala": "mbote",
+        "Lithuanian": "labas",
+        "Luganda": "ki kati",
+        "Luxembourgish": "moien",
+        "Macedonian": "здраво",
+        "Maithili": "नमस्ते",
+        "Malagasy": "salama",
+        "Malay": "hai",
+        "Malayalam": "ഹായ്",
+        "Maltese": "ħej",
+        "Maori": "kia ora",
+        "Marathi": "नमस्कार",
+        "Meiteilon (Manipuri)": "ꯍꯌ",
+        "Mizo": "hei",
+        "Mongolian": "сайн уу",
+        "Myanmar (Burmese)": "ဟေး",
+        "Nepali": "नमस्ते",
+        "Norwegian": "hei",
+        "Nyanja (Chichewa)": "moni",
+        "Odia (Oriya)": "ନମସ୍କାର",
+        "Oromo": "akkam",
+        "Pashto": "سلام",
+        "Persian": "سلام",
+        "Polish": "cześć",
+        "Portuguese (Portugal, Brazil)": "oi",
+        "Punjabi": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ",
+        "Quechua": "napaykullayki",
+        "Romanian": "salut",
+        "Russian": "привет",
+        "Samoan": "talofa",
+        "Sanskrit": "नमस्ते",
+        "Scots Gaelic": "halò",
+        "Sepedi": "dumelang",
+        "Serbian": "здраво",
+        "Sesotho": "lumela",
+        "Shona": "mhoro",
+        "Sindhi": "هيلو",
+        "Sinhala (Sinhalese)": "ආයුබෝවන්",
+        "Slovak": "ahoj",
+        "Slovenian": "živjo",
+        "Somali": "hello",
+        "Spanish": "hola",
+        "Sundanese": "halo",
+        "Swahili": "habari",
+        "Swedish": "hej",
+        "Tagalog (Filipino)": "hello",
+        "Tajik": "салом",
+        "Tamil": "வணக்கம்",
+        "Tatar": "сәлам",
+        "Telugu": "హలో",
+        "Thai": "สวัสดี",
+        "Tigrinya": "ሰላም",
+        "Tsonga": "avuxeni",
+        "Turkish": "merhaba",
+        "Turkmen": "salam",
+        "Twi (Akan)": "akwaaba",
+        "Ukrainian": "привіт",
+        "Urdu": "ہیلو",
+        "Uyghur": "ياخشىمۇسىز",
+        "Uzbek": "salom",
+        "Vietnamese": "chào",
+        "Welsh": "helo",
+        "Xhosa": "molo",
+        "Yiddish": "העלא",
+        "Yoruba": "bawo",
+        "Zulu": "sawubona"
+    };
+    const translateHey = (lang) => {
+        if (lang === 'Auto-detect' || lang === 'English') {
+            setHeyText('hey');
+        } else {
+            setHeyText(translations[lang] || 'hey');
+        }
+    };
+        
     const handleSuggestionClick = (suggestion) => {
         setInput(suggestion);
     };
@@ -125,10 +275,10 @@ const ChatbotUI = () => {
         setModalOpen(true);
     };
 
-    const handleLanguageSelect = (lang) => {
-        setLanguage(lang);
-        setModalOpen(false);
-    };
+    // const handleLanguageSelect = (lang) => {
+    //     setLanguage(lang);
+    //     setModalOpen(false);
+    // };
 
     const handleSearchChange = (event) => {
         setSearch(event.target.value);
@@ -155,12 +305,12 @@ const ChatbotUI = () => {
                     fontFamily: "'Titillium Web', sans-serif"
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '2px', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '30px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
-                        {/* <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>hey</Typography> */}
-                        <img src={`${process.env.PUBLIC_URL}/file.png`} alt="Heybee Logo" style={{ position:'relative' ,top:'-51px'  , marginLeft: '-31px', width: '257px', height: '200px' }} />
+                    <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>{heyText}</Typography>
+                    <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-51px'  , marginLeft: '-31px', width: '150px', height: '70px' }} />
                     </Box>
-                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-70px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask anything, it just works"</Typography>
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '30px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask anything, it just works"</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
                     <IconButton
