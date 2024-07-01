@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem, Modal, List, ListItem, ListItemText, InputBase } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import StopIcon from '@mui/icons-material/Stop';
 import MoodIcon from '@mui/icons-material/Mood';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const theme = createTheme({
@@ -28,8 +31,8 @@ const theme = createTheme({
 });
 
 const suggestions = [
-    { text: "Help me craft a polite message based on a few details", icon: <MoodIcon /> },
-    { text: "Recommend new types of water sports, including pros & cons", icon: <FitnessCenterIcon /> },
+    { text: "Help me draft a business plan to secure funding", icon: <AttachMoneyIcon /> },
+    { text: "Recommend growth strategies for a startup, including pros & cons", icon: <TrendingUpIcon /> },
     { text: "Give me phrases to learn a new language", icon: <TravelExploreIcon /> },
     { text: "Improve the readability of the following code", icon: <CodeIcon /> }
 ];
@@ -65,54 +68,112 @@ const ChatbotUI = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [heyText, setHeyText] = useState('hey');
+    
+    const [isStreaming, setIsStreaming] = useState(false);
+    const [streamingMessage, setStreamingMessage] = useState('');
+    const abortControllerRef = useRef(null);
 
     const handleLanguageSelect = (lang) => {
         setLanguage(lang);
         translateHey(lang);
         setModalOpen(false);
     };
-    
+
+    const [isGettingResponse, setIsGettingResponse] = useState(false);
+    const shouldContinueStreaming = useRef(true);
+
     const handleSend = async () => {
         if (!input.trim()) return;
-
+    
         try {
             const requestData = { query: input, include_web_access: includeWebAccess, language: language };
             const requestBody = JSON.stringify({ body: JSON.stringify(requestData) });
-            console.log('Request body:', requestBody);
-
-            setMessages([...messages, { user: input, bot: 'Typing...' }]);
+            console.log(requestBody)
+            setMessages([...messages, { user: input, bot: '' }]);
             setInput('');
             setIsLoading(true);
-
-            const response = await fetch('https://iu91dk9rh3.execute-api.ap-south-1.amazonaws.com/prod/query', {
+            setIsStreaming(true);
+            setStreamingMessage('');
+            setIsGettingResponse(true);
+    
+            shouldContinueStreaming.current = true;
+    
+            abortControllerRef.current = new AbortController();
+            const signal = abortControllerRef.current.signal;
+    
+            const response = await fetch('https://mxewm1uisc.execute-api.ap-south-1.amazonaws.com/prod/query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,
+                signal,
             });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
+    
             const data = await response.json();
-            console.log('API response:', data);
             const parsedResponse = JSON.parse(data.body);
-
+    
+            // Simulate streaming effect
+            const words = parsedResponse.answer.split(' ');
+            for (let i = 0; i < words.length; i++) {
+                if (!shouldContinueStreaming.current) break;
+                await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
+                setStreamingMessage(prevMessage => {
+                    const newMessage = prevMessage + ' ' + words[i];
+                    if (i === 0) setIsGettingResponse(false);
+                    return newMessage;
+                });
+            }
+    
             setIsLoading(false);
-            setMessages((prevMessages) => {
-                const newMessages = [...prevMessages];
-                newMessages[newMessages.length - 1].bot = parsedResponse.answer;
-                newMessages[newMessages.length - 1].sources = parsedResponse.sources;
-                return newMessages;
-            });
+            setIsStreaming(false);
+            if (shouldContinueStreaming.current) {
+                setMessages(prevMessages => {
+                    const newMessages = [...prevMessages];
+                    newMessages[newMessages.length - 1].bot = parsedResponse.answer;
+                    newMessages[newMessages.length - 1].sources = parsedResponse.sources;
+                    return newMessages;
+                });
+            }
         } catch (error) {
-            console.error('Failed to send message:', error);
-            alert('Failed to send message. Please try again later.');
+            if (error.name === 'AbortError') {
+                console.log('Fetch aborted');
+            } else {
+                console.error('Failed to send message:', error);
+                alert('Failed to send message. Please try again later.');
+            }
             setIsLoading(false);
+            setIsStreaming(false);
+            setIsGettingResponse(false);
         }
     };
+    
+    const formatMessage = (message) => {
+        return message.split('\n').map((str, index) => (
+            <React.Fragment key={index}>
+                {str}
+                <br />
+            </React.Fragment>
+        ));
+    };
+    
+    const handleStop = () => {
+        shouldContinueStreaming.current = false;
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        setIsStreaming(false);
+        setIsLoading(false);
+        setIsGettingResponse(false);
+        setMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            newMessages[newMessages.length - 1].bot = streamingMessage.trim();
+            return newMessages;
+        });
+    };    
     const translations = {
         "Afrikaans": "hallo",
         "Albanian": "hej",
@@ -307,11 +368,9 @@ const ChatbotUI = () => {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
-                    {/* <Typography variant="h2" sx={{ fontWeight: 700, fontFamily: "'Playwrite NO', cursive;" }}>hey bee</Typography> */}
-                    <img src={`${process.env.PUBLIC_URL}/ban.jpg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-20px'  , marginLeft: '-16px', width: '421px', height: '181px' }} />
-                    {/* <img src={`${process.env.PUBLIC_URL}/heybeebanner.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'5px'  , marginLeft: '-31px', width: '207px', height: '150px' }} /> */}
+                        <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-27px'  , marginLeft: '-9px', width: '421px', height: '90px' }} />
                     </Box>
-                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-27px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask anything, it just works"</Typography>
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-27px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask any finance question, it just works"</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
                     <IconButton
@@ -362,138 +421,152 @@ const ChatbotUI = () => {
                     </Paper>
                 </Modal>
                 <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
-                    {suggestions.map((suggestion, index) => (
-                        <Grid item xs={12} sm={6} md={3} key={index}>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                sx={{
-                                    bgcolor: '#F1F1F1',
-                                    color: '#000000',
-                                    textTransform: 'none',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    padding: '10px',
-                                    borderRadius: '10px',
-                                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                                    '&:hover': {
-                                        bgcolor: '#E1E1E1',
-                                    }
-                                }}
-                                onClick={() => handleSuggestionClick(suggestion.text)}
-                            >
-                                {suggestion.icon}
-                                <Typography variant="body2" sx={{ marginTop: '10px', fontFamily: "Roboto Condensed, sans-serif" }}>{suggestion.text}</Typography>
-                            </Button>
-                        </Grid>
-                    ))}
-                </Grid>
+    {suggestions.map((suggestion, index) => (
+        <Grid item xs={12} sm={6} md={3} key={index}>
+            <Button
+                fullWidth
+                variant="contained"
+                sx={{
+                    bgcolor: '#F1F1F1',
+                    color: '#000000',
+                    textTransform: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                    height: '100px', // Fixed height to ensure equal size
+                    '&:hover': {
+                        bgcolor: '#E1E1E1',
+                    }
+                }}
+                onClick={() => handleSuggestionClick(suggestion.text)}
+            >
+                {suggestion.icon}
+                <Typography variant="body2" sx={{ marginTop: '10px', fontFamily: "Roboto Condensed, sans-serif" }}>
+                    {suggestion.text}
+                </Typography>
+            </Button>
+        </Grid>
+    ))}
+</Grid>
                 <Paper
+    sx={{
+        flex: 1,
+        width: '100%',
+        maxWidth: '800px',
+        maxHeight: '38vh',
+        overflowY: 'auto',
+        marginBottom: 2,
+        padding: 2,
+        bgcolor: '#F1F1F1',
+        color: '#000000',
+        borderRadius: '10px',
+        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+    }}
+>
+    {messages.map((msg, index) => (
+        <Box key={index} sx={{ marginBottom: 2 }}>
+            <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
+            <Typography variant="body1">
+                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px', marginBottom: '-10px' }} />
+                <span>:</span> {index === messages.length - 1 && isStreaming ? formatMessage(streamingMessage) : formatMessage(msg.bot)}
+            </Typography>
+            {msg.sources && (
+                <Box sx={{ marginTop: 1 }}>
+                    <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
+                    <Button
+                        aria-controls={`sources-menu-${index}`}
+                        aria-haspopup="true"
+                        onClick={(event) => handleMenuClick(event, msg.sources)}
+                        endIcon={<ExpandMoreIcon />}
+                        sx={{ textTransform: 'none', color: '#000000' }}
+                    >
+                        {msg.sources[0].title}
+                    </Button>
+                    <Menu
+                        anchorEl={anchorEl}
+                        keepMounted
+                        open={Boolean(anchorEl)}
+                        onClose={handleMenuClose}
+                    >
+                        {currentSources.map((source, idx) => (
+                            <MenuItem key={idx}>
+                                <a href={source.url} target="_blank" rel="noopener noreferrer">
+                                    {source.title}
+                                </a>
+                            </MenuItem>
+                        ))}
+                    </Menu>
+                </Box>
+            )}
+        </Box>
+    ))}
+    {isGettingResponse && (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <CircularProgress size={20} sx={{ marginRight: 1 }} />
+                        <Typography variant="body1"><strong></strong> Getting the best response...</Typography>
+                    </Box>
+                )}
+</Paper>
+
+            <Box
+                sx={{
+                    display: 'flex',
+                    width: '100%',
+                    maxWidth: '800px',
+                    bgcolor: '#FFFFFF',
+                    padding: '10px',
+                    borderRadius: '20px',
+                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                    border: '1px solid #000000',
+                }}
+            >
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Ask a question..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            handleSend();
+                        }
+                    }}
                     sx={{
-                        flex: 1,
-                        width: '100%',
-                        maxWidth: '800px',
-                        maxHeight: '38vh',
-                        overflowY: 'auto',
-                        marginBottom: 2,
-                        padding: 2,
-                        bgcolor: '#F1F1F1',
-                        color: '#000000',
+                        bgcolor: '#F9F9F9',
                         borderRadius: '10px',
-                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    }}
-                >
-                    {messages.map((msg, index) => (
-                        <Box key={index} sx={{ marginBottom: 2 }}>
-                            <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
-                            <Typography variant="body1">
-                                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px', marginBottom: '-10px' }} /><span>:</span> {msg.bot}
-                            </Typography>
-                            {msg.sources && (
-                                <Box sx={{ marginTop: 1 }}>
-                                    <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
-                                    <Button
-                                        aria-controls={`sources-menu-${index}`}
-                                        aria-haspopup="true"
-                                        onClick={(event) => handleMenuClick(event, msg.sources)}
-                                        endIcon={<ExpandMoreIcon />}
-                                        sx={{ textTransform: 'none', color: '#000000' }} // Changed link color to black
-                                    >
-                                        {msg.sources[0].title}
-                                    </Button>
-                                    <Menu
-                                        id={`sources-menu-${index}`}
-                                        anchorEl={anchorEl}
-                                        open={Boolean(anchorEl)}
-                                        onClose={handleMenuClose}
-                                        PaperProps={{
-                                            style: {
-                                                maxHeight: '100px', // Display only 2 links at a time
-                                                width: '400px',
-                                                borderRadius: '30px', // Rounded edges
-                                                boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                                            },
-                                        }}
-                                    >
-                                        {currentSources.map((source, sourceIndex) => (
-                                            <MenuItem key={sourceIndex} onClick={handleMenuClose}>
-                                                <Typography variant="body2" component="a" href={source.url} target="_blank" sx={{ textDecoration: 'underline', textDecorationColor: '#3ABEF9', color: '#3ABEF9' }}>
-                                                    {sourceIndex + 1}. {source.title}
-                                                </Typography>
-                                            </MenuItem>
-                                        ))}
-                                    </Menu>
-                                </Box>
-                            )}
-                        </Box>
-                    ))}
-                    {isLoading && (
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <CircularProgress size={20} sx={{ marginRight: 1 }} />
-                            <Typography variant="body1"><strong></strong> Getting the best response..</Typography>
-                        </Box>
-                    )}
-                </Paper>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        width: '100%',
-                        maxWidth: '800px',
-                        bgcolor: '#FFFFFF',
-                        padding: '10px',
-                        borderRadius: '20px',
-                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid #000000', // Border around the input and button container
-                    }}
-                >
-                    <TextField
-                        fullWidth
-                        variant="outlined"
-                        placeholder="Ask a question..."
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                                handleSend();
-                            }
-                        }}
-                        sx={{
-                            bgcolor: '#F9F9F9',
-                            borderRadius: '10px',
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                    borderColor: 'transparent',
-                                },
-                                '&:hover fieldset': {
-                                    borderColor: 'transparent',
-                                },
-                                '&.Mui-focused fieldset': {
-                                    borderColor: 'transparent',
-                                },
+                        '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                                borderColor: 'transparent',
                             },
+                            '&:hover fieldset': {
+                                borderColor: 'transparent',
+                            },
+                            '&.Mui-focused fieldset': {
+                                borderColor: 'transparent',
+                            },
+                        },
+                    }}
+                />
+                {isStreaming ? (
+                    <IconButton
+                        onClick={handleStop}
+                        sx={{
+                            ml: 1,
+                            bgcolor: '#FF0000',
+                            color: '#FFFFFF',
+                            '&:hover': {
+                                bgcolor: '#CC0000',
+                            },
+                            borderRadius: '10px',
+                            border: '1px solid #000000',
                         }}
-                    />
+                    >
+                        <StopIcon />
+                    </IconButton>
+                ) : (
                     <IconButton
                         onClick={handleSend}
                         disabled={!input.trim()}
@@ -505,26 +578,27 @@ const ChatbotUI = () => {
                                 bgcolor: input.trim() ? '#333333' : '#B0B0B0',
                             },
                             borderRadius: '10px',
-                            border: '1px solid #000000', // Black border for 3D effect
+                            border: '1px solid #000000',
                         }}
                     >
                         <SendIcon />
                     </IconButton>
-                </Box>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={includeWebAccess}
-                            onChange={(e) => setIncludeWebAccess(e.target.checked)}
-                            color="primary"
-                        />
-                    }
-                    label="Web Sources"
-                    sx={{ marginTop: 0 }}
-                />
-            </Container>
-        </ThemeProvider>
-    );
+                )}
+            </Box>
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={includeWebAccess}
+                        onChange={(e) => setIncludeWebAccess(e.target.checked)}
+                        color="primary"
+                    />
+                }
+                label="Web Sources"
+                sx={{ marginTop: 0 }}
+            />
+        </Container>
+    </ThemeProvider>
+);
 };
 
 export default ChatbotUI;
