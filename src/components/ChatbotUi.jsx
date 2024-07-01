@@ -2,8 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem, Modal, List, ListItem, ListItemText, InputBase } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
-import MoodIcon from '@mui/icons-material/Mood';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import CodeIcon from '@mui/icons-material/Code';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -455,7 +453,7 @@ const ChatbotUI = () => {
     sx={{
         flex: 1,
         width: '100%',
-        maxWidth: '800px',
+        maxWidth: '740px',
         maxHeight: '38vh',
         overflowY: 'auto',
         marginBottom: 2,
@@ -469,8 +467,8 @@ const ChatbotUI = () => {
     {messages.map((msg, index) => (
         <Box key={index} sx={{ marginBottom: 2 }}>
             <Typography variant="body1"><strong>You:</strong> {msg.user}</Typography>
-            <Typography variant="body1">
-                <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px', marginBottom: '-10px' }} />
+            <Typography style={{ color: "blueviolet" }} variant="body1">
+            <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px', marginBottom: '-10px' }} />
                 <span>:</span> {index === messages.length - 1 && isStreaming ? formatMessage(streamingMessage) : formatMessage(msg.bot)}
             </Typography>
             {msg.sources && (
