@@ -453,7 +453,7 @@ const ChatbotUI = () => {
     sx={{
         flex: 1,
         width: '100%',
-        maxWidth: '740px',
+        maxWidth: '110vh',
         maxHeight: '38vh',
         overflowY: 'auto',
         marginBottom: 2,
