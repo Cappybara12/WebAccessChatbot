@@ -449,11 +449,11 @@ const ChatbotUI = () => {
         </Grid>
     ))}
 </Grid>
-                <Paper
+ <Paper
     sx={{
         flex: 1,
-        width: '100%',
-        maxWidth: '110vh',
+        width: '90%',
+        maxWidth: '800px',
         maxHeight: '38vh',
         overflowY: 'auto',
         marginBottom: 2,
