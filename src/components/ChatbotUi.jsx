@@ -512,7 +512,7 @@ const ChatbotUI = () => {
             <Box
                 sx={{
                     display: 'flex',
-                    width: '100%',
+                    width: '90%',
                     maxWidth: '800px',
                     bgcolor: '#FFFFFF',
                     padding: '10px',
