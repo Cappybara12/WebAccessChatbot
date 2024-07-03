@@ -368,7 +368,7 @@ const ChatbotUI = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
                         <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-27px'  , marginLeft: '-9px', width: '421px', height: '90px' }} />
                     </Box>
-                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-27px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask any finance question, it just works"</Typography>
+                    <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-27px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask any business question, it just works"</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', py: 1, pr: 2 }}>
                     <IconButton
@@ -403,7 +403,7 @@ const ChatbotUI = () => {
                             onChange={handleSearchChange}
                             sx={{
                                 width: '100%',
-                                padding: '10px',
+                                padding: '5px',
                                 marginBottom: '10px',
                                 bgcolor: '#F1F1F1',
                                 borderRadius: '10px',
