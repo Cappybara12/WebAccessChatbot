@@ -9,6 +9,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { Link } from '@mui/material';
 
 const theme = createTheme({
     components: {
@@ -86,7 +87,7 @@ const ChatbotUI = () => {
         try {
             const requestData = { query: input, include_web_access: includeWebAccess, language: language };
             const requestBody = JSON.stringify({ body: JSON.stringify(requestData) });
-            console.log(requestBody)
+            // console.log(requestBody)
             setMessages([...messages, { user: input, bot: '' }]);
             setInput('');
             setIsLoading(true);
@@ -99,7 +100,7 @@ const ChatbotUI = () => {
             abortControllerRef.current = new AbortController();
             const signal = abortControllerRef.current.signal;
     
-            const response = await fetch('https://mxewm1uisc.execute-api.ap-south-1.amazonaws.com/prod/query', {
+            const response = await fetch('https://iu91dk9rh3.execute-api.ap-south-1.amazonaws.com/prod/query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -473,32 +474,63 @@ const ChatbotUI = () => {
             </Typography>
             {msg.sources && (
                 <Box sx={{ marginTop: 1 }}>
-                    <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
-                    <Button
-                        aria-controls={`sources-menu-${index}`}
-                        aria-haspopup="true"
-                        onClick={(event) => handleMenuClick(event, msg.sources)}
-                        endIcon={<ExpandMoreIcon />}
-                        sx={{ textTransform: 'none', color: '#000000' }}
-                    >
-                        {msg.sources[0].title}
-                    </Button>
-                    <Menu
-                        anchorEl={anchorEl}
-                        keepMounted
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                    >
-                        {currentSources.map((source, idx) => (
-                            <MenuItem key={idx}>
-                                <a href={source.url} target="_blank" rel="noopener noreferrer">
-                                    {source.title}
-                                </a>
-                            </MenuItem>
-                        ))}
-                    </Menu>
-                </Box>
-            )}
+            <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
+            <Button
+                aria-controls={`sources-menu-${index}`}
+                aria-haspopup="true"
+                onClick={(event) => handleMenuClick(event, msg.sources)}
+                endIcon={<ExpandMoreIcon />}
+                sx={{ textTransform: 'none', color: '#000000' }}
+            >
+                View Sources
+            </Button>
+            <Menu
+                anchorEl={anchorEl}
+                keepMounted
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                PaperProps={{
+                    style: {
+                        maxHeight: '135px', // Approximate height for 3 items
+                        width: '300px', // Increased width further
+                        borderRadius: '10px',
+                    },
+                }}
+            >
+                {currentSources.map((source, idx) => (
+                    <MenuItem key={idx} sx={{ padding: '8px 16px', minHeight: 'auto' }}>
+                        <Link
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                                color: '#3FA2F6',
+                                textDecoration: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontSize: '0.9rem',
+                                lineHeight: 1.2,
+                                width: '100%', // Ensure the link takes full width
+                                '&:hover': {
+                                    textDecoration: 'underline',
+                                },
+                            }}
+                        >
+                            <span style={{ marginRight: '8px', flexShrink: 0 }}>🔗</span>
+                            <span style={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flexGrow: 1, // Allow the text to take up remaining space
+                            }}>
+                                {source.title}
+                            </span>
+                        </Link>
+                    </MenuItem>
+                ))}
+            </Menu>
+        </Box>
+           )}
         </Box>
     ))}
     {isGettingResponse && (
