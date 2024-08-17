@@ -25,10 +25,45 @@ const theme = createTheme({
                     }
                 }
             }
-        }
-    }
+        },
+        MuiTypography: {
+            styleOverrides: {
+                root: {
+                    '@media (max-width:600px)': {
+                        fontSize: '0.9rem',
+                    },
+                },
+                body2: {
+                    '@media (max-width:600px)': {
+                        fontSize: '0.8rem',
+                    },
+                },
+            },
+        },
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    '@media (max-width:600px)': {
+                        fontSize: '0.8rem',
+                        padding: '6px 12px',
+                    },
+                },
+            },
+        },
+    },
+    breakpoints: {
+        values: {
+            xs: 0,
+            sm: 600,
+            md: 960,
+            lg: 1280,
+            xl: 1920,
+        },
+    },
+    typography: {
+        fontFamily: "'Titillium Web', 'Roboto Condensed', sans-serif",
+    },
 });
-
 const suggestions = [
     { text: "Help me draft a business plan to secure funding", icon: <AttachMoneyIcon /> },
     { text: "Recommend growth strategies for a startup, including pros & cons", icon: <TrendingUpIcon /> },
@@ -355,14 +390,15 @@ const ChatbotUI = () => {
                 sx={{
                     bgcolor: '#FFFFFF',
                     color: '#000000',
-                    minHeight: '100vh',
+                    minHeight: '100vh', // Change from fixed height to minHeight
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'flex-start', // Change from 'center' to 'flex-start'
                     padding: '20px',
                     boxSizing: 'border-box',
-                    fontFamily: "'Titillium Web', sans-serif"
+                    fontFamily: "'Titillium Web', sans-serif",
+                    overflow: 'hidden' // Add this to prevent scrolling on the container
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
@@ -421,7 +457,7 @@ const ChatbotUI = () => {
                 </Modal>
                 <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
     {suggestions.map((suggestion, index) => (
-        <Grid item xs={12} sm={6} md={3} key={index}>
+        <Grid item xs={6} sm={6} md={3} key={index}>
             <Button
                 fullWidth
                 variant="contained"
@@ -435,7 +471,7 @@ const ChatbotUI = () => {
                     padding: '10px',
                     borderRadius: '10px',
                     boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    height: '100px', // Fixed height to ensure equal size
+                    height: { xs: '80px', sm: '100px' }, // Adjust height for different screen sizes
                     '&:hover': {
                         bgcolor: '#E1E1E1',
                     }
@@ -443,19 +479,23 @@ const ChatbotUI = () => {
                 onClick={() => handleSuggestionClick(suggestion.text)}
             >
                 {suggestion.icon}
-                <Typography variant="body2" sx={{ marginTop: '10px', fontFamily: "Roboto Condensed, sans-serif" }}>
+                <Typography variant="body2" sx={{ 
+                    marginTop: '10px', 
+                    fontFamily: "Roboto Condensed, sans-serif",
+                    fontSize: { xs: '0.8rem', sm: '1rem' } // Adjust font size for different screen sizes
+                }}>
                     {suggestion.text}
                 </Typography>
             </Button>
         </Grid>
     ))}
 </Grid>
- <Paper
+<Paper
     sx={{
         flex: 1,
         width: '90%',
         maxWidth: '800px',
-        maxHeight: '38vh',
+        height: 'calc(100vh - 400px)', // Adjust this value as needed
         overflowY: 'auto',
         marginBottom: 2,
         padding: 2,
@@ -464,7 +504,7 @@ const ChatbotUI = () => {
         borderRadius: '10px',
         boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
     }}
->
+>    
     {messages.map((msg, index) => (
         <Box key={index} sx={{ marginBottom: 2 }}>
             <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }}variant="body1"><strong>You:</strong> {msg.user}</Typography>
