@@ -403,7 +403,7 @@ const ChatbotUI = () => {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
-                        <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-27px'  , marginLeft: '-9px', width: '421px', height: '90px' }} />
+                        <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-27px'  , marginLeft: '-9px', width: '421px', height: '90px' }} />
                     </Box>
                     <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-27px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask any business question, it just works"</Typography>
                 </Box>

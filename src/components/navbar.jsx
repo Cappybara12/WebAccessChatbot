@@ -7,7 +7,7 @@ const Navbar = () => {
         <AppBar position="static" sx={{ color: '#000000', bgcolor: '#FFFFFF', borderBottom: '2px solid #000000' }}>
             <Toolbar>
                 <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                    <img src={`${process.env.PUBLIC_URL}/heybooFav.jpg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '8px' }} />
+                    <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Chatbot Logo" style={{ height: '58px', marginRight: '2px' }} />
                     <img src={`${process.env.PUBLIC_URL}/newheybee.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '8px' }} />
                 </Box>
                 <Button component={Link} to="/" sx={{ color: '#000000', textTransform: 'none' }}>Home</Button>
