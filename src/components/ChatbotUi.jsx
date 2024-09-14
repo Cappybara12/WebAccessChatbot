@@ -122,7 +122,6 @@ const ChatbotUI = () => {
         try {
             const requestData = { query: input, include_web_access: includeWebAccess, language: language };
             const requestBody = JSON.stringify({ body: JSON.stringify(requestData) });
-            // console.log(requestBody)
             setMessages([...messages, { user: input, bot: '' }]);
             setInput('');
             setIsLoading(true);
@@ -135,7 +134,7 @@ const ChatbotUI = () => {
             abortControllerRef.current = new AbortController();
             const signal = abortControllerRef.current.signal;
     
-            const response = await fetch('https://iu91dk9rh3.execute-api.ap-south-1.amazonaws.com/prod/query', {
+            const response = await fetch('https://ocjlkmkzvf.execute-api.us-east-1.amazonaws.com/prod/query', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -149,6 +148,11 @@ const ChatbotUI = () => {
     
             const data = await response.json();
             const parsedResponse = JSON.parse(data.body);
+    
+            // Check if parsedResponse and parsedResponse.answer exist
+            if (!parsedResponse || typeof parsedResponse.answer !== 'string') {
+                throw new Error('Invalid response format');
+            }
     
             // Simulate streaming effect
             const words = parsedResponse.answer.split(' ');
@@ -173,15 +177,15 @@ const ChatbotUI = () => {
                 });
             }
         } catch (error) {
-            if (error.name === 'AbortError') {
-                console.log('Fetch aborted');
-            } else {
-                console.error('Failed to send message:', error);
-                alert('Failed to send message. Please try again later.');
-            }
+            console.error('Failed to send message:', error);
             setIsLoading(false);
             setIsStreaming(false);
             setIsGettingResponse(false);
+            setMessages(prevMessages => {
+                const newMessages = [...prevMessages];
+                newMessages[newMessages.length - 1].bot = "Sorry, there was an error processing your request. Please try again.";
+                return newMessages;
+            });
         }
     };
     
@@ -509,7 +513,7 @@ const ChatbotUI = () => {
         <Box key={index} sx={{ marginBottom: 2 }}>
             <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }}variant="body1"><strong>You:</strong> {msg.user}</Typography>
             <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }} variant="body1">
-            <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '27px', marginRight: '0px', marginBottom: '-10px' }} />
+            <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Bee Icon" style={{ height: '37px', marginRight: '0px', marginBottom: '-10px' }} />
                 <span>:</span> {index === messages.length - 1 && isStreaming ? formatMessage(streamingMessage) : formatMessage(msg.bot)}
             </Typography>
             {msg.sources && (
