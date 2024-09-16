@@ -14,7 +14,7 @@ const Navbar = () => {
         <AppBar position="static" sx={{ bgcolor: '#FFFFFF', color: '#000000' ,borderBottom: '2px solid #000000'}}>
             <Toolbar>
                 <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                    <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Chatbot Logo" style={{ height: '55px', marginRight: '8px' }} />
+                    <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Chatbot Logo" style={{ height: '55px', marginRight: '1px' }} />
                     <img src={`${process.env.PUBLIC_URL}/newheybee.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '8px' }} />
                 </Box>
                 {!isAuthPage && (
