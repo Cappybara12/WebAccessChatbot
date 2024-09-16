@@ -1,19 +1,36 @@
-import logo from './logo.svg';
 import './App.css';
 import ChatbotUI from './components/ChatbotUi';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import About from './components/about';
+import AuthLayout from './routes/Auth/auth-layout.component';
+import SignInForm from './components/sign-in/sign-in.component';
+import SignUpForm from './components/sign-up/sign-up.component';
 import Navbar from './components/navbar';
-function App() {
+import { useUserContext } from './contexts/user.context';
+import { Route, Routes, Navigate } from 'react-router-dom';
+
+const App = () => {
   return (
-    <Router>
-    <Navbar />
-    <Routes>
-        <Route path="/" element={<ChatbotUI />} />
-        <Route path="/about" element={<About />} />
-    </Routes>
-</Router>
-);
-}
+    <AppContent />
+  );
+};
+
+const AppContent = () => {
+  const { currentUser } = useUserContext();
+  
+  return (
+    <>
+      {currentUser && <Navbar />}
+      <Routes>
+        <Route path="/" element={currentUser ? <ChatbotUI /> : <Navigate to="/auth/signin" />} />
+        <Route path="/about" element={currentUser ? <About /> : <Navigate to="/auth/signin" />} />
+        <Route path="/auth" element={<AuthLayout />}>
+          <Route index element={<Navigate to="/auth/signin" />} />
+          <Route path="signin" element={currentUser ? <Navigate to="/" /> : <SignInForm />} />
+          <Route path="signup" element={currentUser ? <Navigate to="/" /> : <SignUpForm />} />
+        </Route>
+      </Routes>
+    </>
+  );
+};
 
 export default App;
