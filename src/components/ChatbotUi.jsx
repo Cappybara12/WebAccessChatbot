@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { Container, Box, Typography, TextField, IconButton, Paper, Grid, Button, FormControlLabel, Checkbox, CircularProgress, Menu, MenuItem, Modal, List, ListItem, ListItemText, InputBase } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
@@ -8,9 +7,29 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Link } from '@mui/material';
-
+import { 
+    Container, 
+    Box, 
+    Typography, 
+    TextField, 
+    IconButton, 
+    Paper, 
+    Grid, 
+    Button, 
+    FormControlLabel, 
+    Checkbox, 
+    CircularProgress, 
+    Menu, 
+    MenuItem, 
+    Modal, 
+    List, 
+    ListItem, 
+    ListItemText, 
+    InputBase,
+    useMediaQuery // Add this import
+} from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 const theme = createTheme({
     components: {
         MuiCheckbox: {
@@ -92,6 +111,7 @@ const languages = [
 ];
 
 const ChatbotUI = () => {
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [input, setInput] = useState('');
     const [includeWebAccess, setIncludeWebAccess] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -388,21 +408,21 @@ const ChatbotUI = () => {
     );
 
     return (
-        <ThemeProvider theme={theme}>
+<ThemeProvider theme={theme}>
             <Container
                 maxWidth={false}
                 sx={{
                     bgcolor: '#FFFFFF',
                     color: '#000000',
-                    minHeight: '100vh', // Change from fixed height to minHeight
+                    minHeight: '100vh',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'flex-start', // Change from 'center' to 'flex-start'
-                    padding: '20px',
+                    justifyContent: 'flex-start',
+                    padding: isMobile ? '10px' : '20px', // Use isMobile here
                     boxSizing: 'border-box',
                     fontFamily: "'Titillium Web', sans-serif",
-                    overflow: 'hidden' // Add this to prevent scrolling on the container
+                    overflow: 'hidden'
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
@@ -459,56 +479,56 @@ const ChatbotUI = () => {
                         </List>
                     </Paper>
                 </Modal>
-                <Grid container spacing={2} sx={{ marginBottom: 2, maxWidth: '800px' }}>
-    {suggestions.map((suggestion, index) => (
-        <Grid item xs={6} sm={6} md={3} key={index}>
-            <Button
-                fullWidth
-                variant="contained"
-                sx={{
-                    bgcolor: '#F1F1F1',
-                    color: '#000000',
-                    textTransform: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: '10px',
-                    borderRadius: '10px',
-                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    height: { xs: '80px', sm: '100px' }, // Adjust height for different screen sizes
-                    '&:hover': {
-                        bgcolor: '#E1E1E1',
-                    }
-                }}
-                onClick={() => handleSuggestionClick(suggestion.text)}
-            >
-                {suggestion.icon}
-                <Typography variant="body2" sx={{ 
-                    marginTop: '10px', 
-                    fontFamily: "Roboto Condensed, sans-serif",
-                    fontSize: { xs: '0.8rem', sm: '1rem' } // Adjust font size for different screen sizes
-                }}>
-                    {suggestion.text}
-                </Typography>
-            </Button>
-        </Grid>
-    ))}
-</Grid>
+                <Grid container spacing={isMobile ? 1 : 2} sx={{ marginBottom: 2, maxWidth: '800px', width: '100%' }}>
+                    {suggestions.map((suggestion, index) => (
+                        <Grid item xs={6} sm={6} md={3} key={index}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                sx={{
+                                    bgcolor: '#F1F1F1',
+                                    color: '#000000',
+                                    textTransform: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    padding: isMobile ? '5px' : '10px',
+                                    borderRadius: '10px',
+                                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                                    height: isMobile ? '70px' : '100px',
+                                    '&:hover': {
+                                        bgcolor: '#E1E1E1',
+                                    }
+                                }}
+                                onClick={() => handleSuggestionClick(suggestion.text)}
+                            >
+                                {suggestion.icon}
+                                <Typography variant="body2" sx={{ 
+                                    marginTop: isMobile ? '5px' : '10px',
+                                    fontFamily: "Roboto Condensed, sans-serif",
+                                    fontSize: isMobile ? '0.7rem' : '1rem'
+                                }}>
+                                    {suggestion.text}
+                                </Typography>
+                            </Button>
+                        </Grid>
+                    ))}
+                </Grid>
 <Paper
-    sx={{
-        flex: 1,
-        width: '90%',
-        maxWidth: '800px',
-        height: 'calc(100vh - 400px)', // Adjust this value as needed
-        overflowY: 'auto',
-        marginBottom: 2,
-        padding: 2,
-        bgcolor: '#F1F1F1',
-        color: '#000000',
-        borderRadius: '10px',
-        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-    }}
->    
+                    sx={{
+                        flex: 1,
+                        width: '90%',
+                        maxWidth: '800px',
+                        height: isMobile ? 'calc(100vh - 300px)' : 'calc(100vh - 400px)', // Adjust height for mobile
+                        overflowY: 'auto',
+                        marginBottom: 2,
+                        padding: isMobile ? 1 : 2,
+                        bgcolor: '#F1F1F1',
+                        color: '#000000',
+                        borderRadius: '10px',
+                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
     {messages.map((msg, index) => (
         <Box key={index} sx={{ marginBottom: 2 }}>
             <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }}variant="body1"><strong>You:</strong> {msg.user}</Typography>

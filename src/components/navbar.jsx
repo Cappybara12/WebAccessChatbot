@@ -1,32 +1,78 @@
-import React, { useContext } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import React, { useContext, useState } from 'react';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, Menu, MenuItem } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { Link, useLocation } from 'react-router-dom';
 import { UserContext } from '../contexts/user.context';
-import { signOutUser } from '../utils/firebase/firebase.utils'; // Adjust the path based on your folder structure
+import { signOutUser } from '../utils/firebase/firebase.utils';
 
 const Navbar = () => {
     const { currentUser } = useContext(UserContext);
     const location = useLocation();
-    
+    const [anchorEl, setAnchorEl] = useState(null);
+
     const isAuthPage = location.pathname === '/auth';
 
+    const handleMenu = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
     return (
-        <AppBar position="static" sx={{ bgcolor: '#FFFFFF', color: '#000000' ,borderBottom: '2px solid #000000'}}>
+        <AppBar position="static" sx={{ bgcolor: '#FFFFFF', color: '#000000', borderBottom: '2px solid #000000' }}>
             <Toolbar>
                 <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                    <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Chatbot Logo" style={{ height: '55px', marginRight: '1px' }} />
-                    <img src={`${process.env.PUBLIC_URL}/newheybee.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '8px' }} />
+                    <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '1px' }} />
+                    <img src={`${process.env.PUBLIC_URL}/newheybee.svg`} alt="Chatbot Logo" style={{ height: '30px', marginRight: '8px' }} />
                 </Box>
                 {!isAuthPage && (
                     <>
-                        <Button component={Link} to="/" sx={{ color: '#000000', textTransform: 'none' }}>Home</Button>
-                        <Button component={Link} to="/about" sx={{ color: '#000000', textTransform: 'none' }}>About</Button>
+                        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                            <Button component={Link} to="/" sx={{ color: '#000000', textTransform: 'none' }}>Home</Button>
+                            <Button component={Link} to="/about" sx={{ color: '#000000', textTransform: 'none' }}>About</Button>
+                            {currentUser ? (
+                                <Button onClick={signOutUser} sx={{ color: '#000000', textTransform: 'none' }}>Sign Out</Button>
+                            ) : (
+                                <Button component={Link} to="/auth" sx={{ color: '#000000', textTransform: 'none' }}>Sign In</Button>
+                            )}
+                        </Box>
+                        <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                            <IconButton
+                                size="large"
+                                edge="start"
+                                color="inherit"
+                                aria-label="menu"
+                                onClick={handleMenu}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Menu
+                                id="menu-appbar"
+                                anchorEl={anchorEl}
+                                anchorOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                                keepMounted
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                                open={Boolean(anchorEl)}
+                                onClose={handleClose}
+                            >
+                                <MenuItem onClick={handleClose} component={Link} to="/">Home</MenuItem>
+                                <MenuItem onClick={handleClose} component={Link} to="/about">About</MenuItem>
+                                {currentUser ? (
+                                    <MenuItem onClick={() => { handleClose(); signOutUser(); }}>Sign Out</MenuItem>
+                                ) : (
+                                    <MenuItem onClick={handleClose} component={Link} to="/auth">Sign In</MenuItem>
+                                )}
+                            </Menu>
+                        </Box>
                     </>
-                )}
-                {currentUser ? (
-                    <Button onClick={signOutUser} sx={{ color: '#000000', textTransform: 'none' }}>Sign Out</Button>
-                ) : (
-                    <Button component={Link} to="/auth" sx={{ color: '#000000', textTransform: 'none' }}>Sign In</Button>
                 )}
             </Toolbar>
         </AppBar>
