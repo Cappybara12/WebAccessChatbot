@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../contexts/user.context';
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
@@ -27,7 +29,7 @@ import {
     ListItem, 
     ListItemText, 
     InputBase,
-    useMediaQuery // Add this import
+    useMediaQuery
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 const theme = createTheme({
@@ -112,6 +114,9 @@ const languages = [
 
 const ChatbotUI = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const { currentUser } = useContext(UserContext);
+    const navigate = useNavigate();
+    const [isRedirecting, setIsRedirecting] = useState(false);
     const [input, setInput] = useState('');
     const [includeWebAccess, setIncludeWebAccess] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -126,6 +131,12 @@ const ChatbotUI = () => {
     const [isStreaming, setIsStreaming] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const abortControllerRef = useRef(null);
+    const handleInputFocus = () => {
+        if (!currentUser && !isRedirecting) {
+            setIsRedirecting(true);
+            navigate('/auth/signin');
+        }
+    };
 
     const handleLanguageSelect = (lang) => {
         setLanguage(lang);
@@ -137,6 +148,10 @@ const ChatbotUI = () => {
     const shouldContinueStreaming = useRef(true);
 
     const handleSend = async () => {
+        if (!currentUser) {
+            handleInputFocus();
+            return;
+        }
         if (!input.trim()) return;
     
         try {
@@ -623,9 +638,12 @@ const ChatbotUI = () => {
                     placeholder="Ask a question..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
+                    onFocus={handleInputFocus}
                     onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' && currentUser) {
                             handleSend();
+                        } else if (e.key === 'Enter') {
+                            handleInputFocus();
                         }
                     }}
                     sx={{
@@ -663,7 +681,7 @@ const ChatbotUI = () => {
                 ) : (
                     <IconButton
                         onClick={handleSend}
-                        disabled={!input.trim()}
+                        disabled={!input.trim() || !currentUser}
                         sx={{
                             ml: 1,
                             bgcolor: input.trim() ? '#000000' : '#B0B0B0',

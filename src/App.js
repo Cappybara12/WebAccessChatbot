@@ -9,19 +9,13 @@ import { useUserContext } from './contexts/user.context';
 import { Route, Routes, Navigate } from 'react-router-dom';
 
 const App = () => {
-  return (
-    <AppContent />
-  );
-};
-
-const AppContent = () => {
   const { currentUser } = useUserContext();
-  
+
   return (
     <>
-      {currentUser && <Navbar />}
+      <Navbar />
       <Routes>
-        <Route path="/" element={currentUser ? <ChatbotUI /> : <Navigate to="/auth/signin" />} />
+        <Route path="/" element={<ChatbotUI />} />
         <Route path="/about" element={currentUser ? <About /> : <Navigate to="/auth/signin" />} />
         <Route path="/auth" element={<AuthLayout />}>
           <Route index element={<Navigate to="/auth/signin" />} />

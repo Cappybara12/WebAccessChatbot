@@ -7,10 +7,7 @@ import { signOutUser } from '../utils/firebase/firebase.utils';
 
 const Navbar = () => {
     const { currentUser } = useContext(UserContext);
-    const location = useLocation();
     const [anchorEl, setAnchorEl] = useState(null);
-
-    const isAuthPage = location.pathname === '/auth';
 
     const handleMenu = (event) => {
         setAnchorEl(event.currentTarget);
@@ -27,53 +24,53 @@ const Navbar = () => {
                     <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '1px' }} />
                     <img src={`${process.env.PUBLIC_URL}/newheybee.svg`} alt="Chatbot Logo" style={{ height: '30px', marginRight: '8px' }} />
                 </Box>
-                {!isAuthPage && (
-                    <>
-                        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-                            <Button component={Link} to="/" sx={{ color: '#000000', textTransform: 'none' }}>Home</Button>
-                            <Button component={Link} to="/about" sx={{ color: '#000000', textTransform: 'none' }}>About</Button>
-                            {currentUser ? (
-                                <Button onClick={signOutUser} sx={{ color: '#000000', textTransform: 'none' }}>Sign Out</Button>
-                            ) : (
-                                <Button component={Link} to="/auth" sx={{ color: '#000000', textTransform: 'none' }}>Sign In</Button>
-                            )}
-                        </Box>
-                        <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-                            <IconButton
-                                size="large"
-                                edge="start"
-                                color="inherit"
-                                aria-label="menu"
-                                onClick={handleMenu}
-                            >
-                                <MenuIcon />
-                            </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                anchorEl={anchorEl}
-                                anchorOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                keepMounted
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                                open={Boolean(anchorEl)}
-                                onClose={handleClose}
-                            >
-                                <MenuItem onClick={handleClose} component={Link} to="/">Home</MenuItem>
-                                <MenuItem onClick={handleClose} component={Link} to="/about">About</MenuItem>
-                                {currentUser ? (
-                                    <MenuItem onClick={() => { handleClose(); signOutUser(); }}>Sign Out</MenuItem>
-                                ) : (
-                                    <MenuItem onClick={handleClose} component={Link} to="/auth">Sign In</MenuItem>
-                                )}
-                            </Menu>
-                        </Box>
-                    </>
-                )}
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                    <Button component={Link} to="/" sx={{ color: '#000000', textTransform: 'none' }}>Home</Button>
+                    {currentUser && (
+                        <Button component={Link} to="/about" sx={{ color: '#000000', textTransform: 'none' }}>About</Button>
+                    )}
+                    {currentUser ? (
+                        <Button onClick={signOutUser} sx={{ color: '#000000', textTransform: 'none' }}>Sign Out</Button>
+                    ) : (
+                        <Button component={Link} to="/auth/signin" sx={{ color: '#000000', textTransform: 'none' }}>Sign In</Button>
+                    )}
+                </Box>
+                <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                    <IconButton
+                        size="large"
+                        edge="start"
+                        color="inherit"
+                        aria-label="menu"
+                        onClick={handleMenu}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                    <Menu
+                        id="menu-appbar"
+                        anchorEl={anchorEl}
+                        anchorOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        keepMounted
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        open={Boolean(anchorEl)}
+                        onClose={handleClose}
+                    >
+                        <MenuItem onClick={handleClose} component={Link} to="/">Home</MenuItem>
+                        {currentUser && (
+                            <MenuItem onClick={handleClose} component={Link} to="/about">About</MenuItem>
+                        )}
+                        {currentUser ? (
+                            <MenuItem onClick={() => { handleClose(); signOutUser(); }}>Sign Out</MenuItem>
+                        ) : (
+                            <MenuItem onClick={handleClose} component={Link} to="/auth/signin">Sign In</MenuItem>
+                        )}
+                    </Menu>
+                </Box>
             </Toolbar>
         </AppBar>
     );
