@@ -548,7 +548,7 @@ const ChatbotUI = () => {
         <Box key={index} sx={{ marginBottom: 2 }}>
             <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }}variant="body1"><strong>You:</strong> {msg.user}</Typography>
             <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }} variant="body1">
-            <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Bee Icon" style={{ height: '37px', marginRight: '0px', marginBottom: '-10px' }} />
+            <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '37px', marginRight: '0px', marginBottom: '-10px' }} />
                 <span>:</span> {index === messages.length - 1 && isStreaming ? formatMessage(streamingMessage) : formatMessage(msg.bot)}
             </Typography>
             {msg.sources && (
