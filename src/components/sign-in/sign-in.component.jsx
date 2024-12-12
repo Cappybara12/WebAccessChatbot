@@ -51,7 +51,7 @@ const SignInForm = () => {
 
   return (
     <div className="auth-container">
-      <img src="/heybee2.svg" alt="HeyBee Logo" className="logo" />
+      <img src="/Heybee.svg" alt="HeyBee Logo" className="logo" />
       <h2>Welcome Back</h2>
       <p>Sign in to your account</p>
       <form onSubmit={handleSubmit}>
