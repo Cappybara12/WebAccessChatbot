@@ -40,7 +40,7 @@ const SignUpForm = () => {
 
   return (
     <div className="auth-container">
-      <img src="/heybee2.svg" alt="HeyBee Logo" className="logo" />
+      <img src="/Heybee.svg" alt="HeyBee Logo" className="logo" />
       <h2>Create an Account</h2>
       <p>Sign up to get started</p>
       <form onSubmit={handleSubmit}>

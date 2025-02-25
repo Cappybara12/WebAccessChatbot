@@ -9,6 +9,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import MicIcon from '@mui/icons-material/Mic'; // Add microphone icon
+import MicOffIcon from '@mui/icons-material/MicOff'; // Add microphone off icon
 import { Link } from '@mui/material';
 import { 
     Container, 
@@ -32,7 +34,9 @@ import {
     useMediaQuery
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+
 const theme = createTheme({
+    // Theme configuration remains the same
     components: {
         MuiCheckbox: {
             styleOverrides: {
@@ -85,12 +89,15 @@ const theme = createTheme({
         fontFamily: "'Titillium Web', 'Roboto Condensed', sans-serif",
     },
 });
+
 const suggestions = [
     { text: "Help me draft a business plan to secure funding", icon: <AttachMoneyIcon /> },
     { text: "Recommend growth strategies for a startup, including pros & cons", icon: <TrendingUpIcon /> },
     { text: "Give me phrases to learn a new language", icon: <TravelExploreIcon /> },
     { text: "Improve the readability of the following code", icon: <CodeIcon /> }
 ];
+    // Function to send recorded audio to backend
+// Function to send recorded audio to backend
 
 const languages = [
     "Auto-detect",
@@ -131,6 +138,14 @@ const ChatbotUI = () => {
     const [isStreaming, setIsStreaming] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const abortControllerRef = useRef(null);
+    
+    // Add new state variables for microphone functionality
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const [recordingStatus, setRecordingStatus] = useState('');
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+
     const handleInputFocus = () => {
         if (!currentUser && !isRedirecting) {
             setIsRedirecting(true);
@@ -146,6 +161,146 @@ const ChatbotUI = () => {
 
     const [isGettingResponse, setIsGettingResponse] = useState(false);
     const shouldContinueStreaming = useRef(true);
+
+    // Function to start recording audio
+    const startRecording = async () => {
+        if (!currentUser) {
+            handleInputFocus();
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            setIsRecording(true);
+            setRecordingStatus('Recording...');
+            
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                setAudioBlob(audioBlob);
+                setIsRecording(false);
+                setRecordingStatus('Processing audio...');
+                sendAudioToBackend(audioBlob);
+                
+                // Stop all tracks in the stream to release the microphone
+                stream.getTracks().forEach(track => track.stop());
+            };
+            
+            mediaRecorder.start();
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            setRecordingStatus('Error accessing microphone. Please check permissions.');
+            setIsRecording(false);
+        }
+    };
+
+    // Function to stop recording
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+        }
+    };
+
+    // Function to send recorded audio to backend
+// Function to send recorded audio to backend
+const sendAudioToBackend = async (blob) => {
+    try {
+        // Update UI to show processing status
+        setMessages([...messages, { user: '🎤 [Voice Input]', bot: '' }]);
+        setIsLoading(true);
+        setIsStreaming(true);
+        setStreamingMessage('');
+        setIsGettingResponse(true);
+        shouldContinueStreaming.current = true;
+        
+        // Convert blob to base64 for sending to API
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+            const base64Audio = reader.result.split(',')[1]; // Remove the data URL prefix
+            
+            // Prepare request data with base64 audio
+            const requestData = { 
+                audio_data: base64Audio,
+                audio_format: 'wav',
+                include_web_access: includeWebAccess, 
+                language: language 
+            };
+            
+            // Prepare the request
+            abortControllerRef.current = new AbortController();
+            const signal = abortControllerRef.current.signal;
+            
+            const response = await fetch('https://ocjlkmkzvf.execute-api.us-east-1.amazonaws.com/prod/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    body: JSON.stringify(requestData)
+                }),
+                signal,
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const parsedResponse = JSON.parse(data.body);
+            
+            // Check if parsedResponse and parsedResponse.answer exist
+            if (!parsedResponse || typeof parsedResponse.answer !== 'string') {
+                throw new Error('Invalid response format');
+            }
+            
+            // Simulate streaming effect
+            const words = parsedResponse.answer.split(' ');
+            for (let i = 0; i < words.length; i++) {
+                if (!shouldContinueStreaming.current) break;
+                await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
+                setStreamingMessage(prevMessage => {
+                    const newMessage = prevMessage + ' ' + words[i];
+                    if (i === 0) setIsGettingResponse(false);
+                    return newMessage;
+                });
+            }
+            
+            setIsLoading(false);
+            setIsStreaming(false);
+            setRecordingStatus('');
+            
+            if (shouldContinueStreaming.current) {
+                setMessages(prevMessages => {
+                    const newMessages = [...prevMessages];
+                    newMessages[newMessages.length - 1].bot = parsedResponse.answer;
+                    newMessages[newMessages.length - 1].sources = parsedResponse.sources;
+                    return newMessages;
+                });
+            }
+        };
+    } catch (error) {
+        console.error('Failed to send audio:', error);
+        setIsLoading(false);
+        setIsStreaming(false);
+        setIsGettingResponse(false);
+        setRecordingStatus('');
+        setMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            newMessages[newMessages.length - 1].bot = "Sorry, there was an error processing your audio. Please try again.";
+            return newMessages;
+        });
+    }
+};
 
     const handleSend = async () => {
         if (!currentUser) {
@@ -247,6 +402,7 @@ const ChatbotUI = () => {
             return newMessages;
         });
     };    
+    
     const translations = {
         "Afrikaans": "hallo",
         "Albanian": "hej",
@@ -383,6 +539,7 @@ const ChatbotUI = () => {
         "Yoruba": "bawo",
         "Zulu": "sawubona"
     };
+    
     const translateHey = (lang) => {
         if (lang === 'Auto-detect' || lang === 'English') {
             setHeyText('hey');
@@ -409,11 +566,6 @@ const ChatbotUI = () => {
         setModalOpen(true);
     };
 
-    // const handleLanguageSelect = (lang) => {
-    //     setLanguage(lang);
-    //     setModalOpen(false);
-    // };
-
     const handleSearchChange = (event) => {
         setSearch(event.target.value);
     };
@@ -423,7 +575,7 @@ const ChatbotUI = () => {
     );
 
     return (
-<ThemeProvider theme={theme}>
+        <ThemeProvider theme={theme}>
             <Container
                 maxWidth={false}
                 sx={{
@@ -434,7 +586,7 @@ const ChatbotUI = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'flex-start',
-                    padding: isMobile ? '10px' : '20px', // Use isMobile here
+                    padding: isMobile ? '10px' : '20px',
                     boxSizing: 'border-box',
                     fontFamily: "'Titillium Web', sans-serif",
                     overflow: 'hidden'
@@ -442,7 +594,7 @@ const ChatbotUI = () => {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}> 
-                        <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-17px'  , marginLeft: '-9px', width: '411px', height: '72px' }} />
+                        <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Heybee Logo" style={{ position:'relative' ,top:'-27px', marginLeft: '-9px', width: '421px', height: '90px' }} />
                     </Box>
                     <Typography variant="subtitle1" sx={{ color: '#000000', marginTop: '-27px', fontWeight: 'bold', fontFamily: "Roboto Condensed, sans-serif" }}>"Ask any business question, it just works"</Typography>
                 </Box>
@@ -529,12 +681,12 @@ const ChatbotUI = () => {
                         </Grid>
                     ))}
                 </Grid>
-<Paper
+                <Paper
                     sx={{
                         flex: 1,
                         width: '90%',
                         maxWidth: '800px',
-                        height: isMobile ? 'calc(100vh - 300px)' : 'calc(100vh - 400px)', // Adjust height for mobile
+                        height: isMobile ? 'calc(100vh - 300px)' : 'calc(100vh - 400px)',
                         overflowY: 'auto',
                         marginBottom: 2,
                         padding: isMobile ? 1 : 2,
@@ -544,173 +696,197 @@ const ChatbotUI = () => {
                         boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
                     }}
                 >
-    {messages.map((msg, index) => (
-        <Box key={index} sx={{ marginBottom: 2 }}>
-            <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }}variant="body1"><strong>You:</strong> {msg.user}</Typography>
-            <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }} variant="body1">
-            <img src={`${process.env.PUBLIC_URL}/heybee2.svg`} alt="Bee Icon" style={{ height: '37px', marginRight: '0px', marginBottom: '-10px' }} />
-                <span>:</span> {index === messages.length - 1 && isStreaming ? formatMessage(streamingMessage) : formatMessage(msg.bot)}
-            </Typography>
-            {msg.sources && (
-                <Box sx={{ marginTop: 1 }}>
-            <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
-            <Button
-                aria-controls={`sources-menu-${index}`}
-                aria-haspopup="true"
-                onClick={(event) => handleMenuClick(event, msg.sources)}
-                endIcon={<ExpandMoreIcon />}
-                sx={{ textTransform: 'none', color: '#000000' }}
-            >
-                View Sources
-            </Button>
-            <Menu
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                PaperProps={{
-                    style: {
-                        maxHeight: '135px', // Approximate height for 3 items
-                        width: '300px', // Increased width further
-                        borderRadius: '10px',
-                    },
-                }}
-            >
-                {currentSources.map((source, idx) => (
-                    <MenuItem key={idx} sx={{ padding: '8px 16px', minHeight: 'auto' }}>
-                        <Link
-                            href={source.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                                color: '#3FA2F6',
-                                textDecoration: 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontSize: '0.9rem',
-                                lineHeight: 1.2,
-                                width: '100%', // Ensure the link takes full width
-                                '&:hover': {
-                                    textDecoration: 'underline',
+                    {messages.map((msg, index) => (
+                        <Box key={index} sx={{ marginBottom: 2 }}>
+                            <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }}variant="body1"><strong>You:</strong> {msg.user}</Typography>
+                            <Typography style={{fontFamily:"Roboto Condensed, sans-serif" }} variant="body1">
+                            <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Bee Icon" style={{ height: '37px', marginRight: '0px', marginBottom: '-10px' }} />
+                                <span>:</span> {index === messages.length - 1 && isStreaming ? formatMessage(streamingMessage) : formatMessage(msg.bot)}
+                            </Typography>
+                            {msg.sources && (
+                                <Box sx={{ marginTop: 1 }}>
+                                    <Typography variant="body2"><strong>Sources and Learn More:</strong></Typography>
+                                    <Button
+                                        aria-controls={`sources-menu-${index}`}
+                                        aria-haspopup="true"
+                                        onClick={(event) => handleMenuClick(event, msg.sources)}
+                                        endIcon={<ExpandMoreIcon />}
+                                        sx={{ textTransform: 'none', color: '#000000' }}
+                                    >
+                                        View Sources
+                                    </Button>
+                                    <Menu
+                                        anchorEl={anchorEl}
+                                        keepMounted
+                                        open={Boolean(anchorEl)}
+                                        onClose={handleMenuClose}
+                                        PaperProps={{
+                                            style: {
+                                                maxHeight: '135px',
+                                                width: '300px',
+                                                borderRadius: '10px',
+                                            },
+                                        }}
+                                    >
+                                        {currentSources.map((source, idx) => (
+                                            <MenuItem key={idx} sx={{ padding: '8px 16px', minHeight: 'auto' }}>
+                                                <Link
+                                                    href={source.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    sx={{
+                                                        color: '#3FA2F6',
+                                                        textDecoration: 'none',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        fontSize: '0.9rem',
+                                                        lineHeight: 1.2,
+                                                        width: '100%',
+                                                        '&:hover': {
+                                                            textDecoration: 'underline',
+                                                        },
+                                                    }}
+                                                >
+                                                    <span style={{ marginRight: '8px', flexShrink: 0 }}>🔗</span>
+                                                    <span style={{
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                        flexGrow: 1,
+                                                    }}>
+                                                        {source.title}
+                                                    </span>
+                                                </Link>
+                                            </MenuItem>
+                                        ))}
+                                    </Menu>
+                                </Box>
+                            )}
+                        </Box>
+                    ))}
+                    {isGettingResponse && (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <CircularProgress size={20} sx={{ marginRight: 1 }} />
+                            <Typography variant="body1"><strong></strong> Getting the best response...</Typography>
+                        </Box>
+                    )}
+                    {recordingStatus && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 2 }}>
+                            {isRecording && <span style={{ color: 'red', marginRight: '8px' }}>●</span>}
+                            <Typography variant="body2">{recordingStatus}</Typography>
+                        </Box>
+                    )}
+                </Paper>
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        width: '90%',
+                        maxWidth: '800px',
+                        bgcolor: '#FFFFFF',
+                        padding: '10px',
+                        borderRadius: '20px',
+                        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid #000000',
+                    }}
+                >
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        placeholder="Ask a question..."
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onFocus={handleInputFocus}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter' && currentUser) {
+                                handleSend();
+                            } else if (e.key === 'Enter') {
+                                handleInputFocus();
+                            }
+                        }}
+                        sx={{
+                            bgcolor: '#F9F9F9',
+                            borderRadius: '10px',
+                            '& .MuiOutlinedInput-root': {
+                                '& fieldset': {
+                                    borderColor: 'transparent',
                                 },
+                                '&:hover fieldset': {
+                                    borderColor: 'transparent',
+                                },
+                                '&.Mui-focused fieldset': {
+                                    borderColor: 'transparent',
+                                },
+                            },
+                        }}
+                    />
+                    {/* Microphone button */}
+                    <IconButton
+                        onClick={isRecording ? stopRecording : startRecording}
+                        sx={{
+                            mx: 1,
+                            bgcolor: isRecording ? '#FF0000' : '#F9F9F9',
+                            color: isRecording ? '#FFFFFF' : '#000000',
+                            '&:hover': {
+                                bgcolor: isRecording ? '#CC0000' : '#E1E1E1',
+                            },
+                            borderRadius: '10px',
+                            border: '1px solid #000000',
+                        }}
+                    >
+                        {isRecording ? <MicOffIcon /> : <MicIcon />}
+                    </IconButton>
+                    
+                    {/* Send/Stop button */}
+                    {isStreaming ? (
+                        <IconButton
+                            onClick={handleStop}
+                            sx={{
+                                ml: 1,
+                                bgcolor: '#FF0000',
+                                color: '#FFFFFF',
+                                '&:hover': {
+                                    bgcolor: '#CC0000',
+                                },
+                                borderRadius: '10px',
+                                border: '1px solid #000000',
                             }}
                         >
-                            <span style={{ marginRight: '8px', flexShrink: 0 }}>🔗</span>
-                            <span style={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                flexGrow: 1, // Allow the text to take up remaining space
-                            }}>
-                                {source.title}
-                            </span>
-                        </Link>
-                    </MenuItem>
-                ))}
-            </Menu>
-        </Box>
-           )}
-        </Box>
-    ))}
-    {isGettingResponse && (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <CircularProgress size={20} sx={{ marginRight: 1 }} />
-                        <Typography variant="body1"><strong></strong> Getting the best response...</Typography>
-                    </Box>
-                )}
-</Paper>
-
-            <Box
-                sx={{
-                    display: 'flex',
-                    width: '90%',
-                    maxWidth: '800px',
-                    bgcolor: '#FFFFFF',
-                    padding: '10px',
-                    borderRadius: '20px',
-                    boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #000000',
-                }}
-            >
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Ask a question..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onFocus={handleInputFocus}
-                    onKeyPress={(e) => {
-                        if (e.key === 'Enter' && currentUser) {
-                            handleSend();
-                        } else if (e.key === 'Enter') {
-                            handleInputFocus();
-                        }
-                    }}
-                    sx={{
-                        bgcolor: '#F9F9F9',
-                        borderRadius: '10px',
-                        '& .MuiOutlinedInput-root': {
-                            '& fieldset': {
-                                borderColor: 'transparent',
-                            },
-                            '&:hover fieldset': {
-                                borderColor: 'transparent',
-                            },
-                            '&.Mui-focused fieldset': {
-                                borderColor: 'transparent',
-                            },
-                        },
-                    }}
+                            <StopIcon />
+                        </IconButton>
+                    ) : (
+                        <IconButton
+                            onClick={handleSend}
+                            disabled={!input.trim() || !currentUser}
+                            sx={{
+                                ml: 1,
+                                bgcolor: input.trim() ? '#000000' : '#B0B0B0',
+                                color: '#FFFFFF',
+                                '&:hover': {
+                                    bgcolor: input.trim() ? '#333333' : '#B0B0B0',
+                                },
+                                borderRadius: '10px',
+                                border: '1px solid #000000',
+                            }}
+                        >
+                            <SendIcon />
+                        </IconButton>
+                    )}
+                </Box>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={includeWebAccess}
+                            onChange={(e) => setIncludeWebAccess(e.target.checked)}
+                            color="primary"
+                        />
+                    }
+                    label="Web Sources"
+                    sx={{ marginTop: 0 }}
                 />
-                {isStreaming ? (
-                    <IconButton
-                        onClick={handleStop}
-                        sx={{
-                            ml: 1,
-                            bgcolor: '#FF0000',
-                            color: '#FFFFFF',
-                            '&:hover': {
-                                bgcolor: '#CC0000',
-                            },
-                            borderRadius: '10px',
-                            border: '1px solid #000000',
-                        }}
-                    >
-                        <StopIcon />
-                    </IconButton>
-                ) : (
-                    <IconButton
-                        onClick={handleSend}
-                        disabled={!input.trim() || !currentUser}
-                        sx={{
-                            ml: 1,
-                            bgcolor: input.trim() ? '#000000' : '#B0B0B0',
-                            color: '#FFFFFF',
-                            '&:hover': {
-                                bgcolor: input.trim() ? '#333333' : '#B0B0B0',
-                            },
-                            borderRadius: '10px',
-                            border: '1px solid #000000',
-                        }}
-                    >
-                        <SendIcon />
-                    </IconButton>
-                )}
-            </Box>
-            <FormControlLabel
-                control={
-                    <Checkbox
-                        checked={includeWebAccess}
-                        onChange={(e) => setIncludeWebAccess(e.target.checked)}
-                        color="primary"
-                    />
-                }
-                label="Web Sources"
-                sx={{ marginTop: 0 }}
-            />
-        </Container>
-    </ThemeProvider>
-);
+            </Container>
+        </ThemeProvider>
+    );
 };
 
 export default ChatbotUI;
