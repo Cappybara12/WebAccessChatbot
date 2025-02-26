@@ -12,6 +12,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import MicIcon from '@mui/icons-material/Mic'; // Add microphone icon
 import MicOffIcon from '@mui/icons-material/MicOff'; // Add microphone off icon
 import { Link } from '@mui/material';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import { 
     Container, 
     Box, 
@@ -98,7 +99,15 @@ const suggestions = [
 ];
     // Function to send recorded audio to backend
 // Function to send recorded audio to backend
-
+const SPEECH_LANG_CODES = {
+    "English": "en-US",
+    "Spanish": "es-ES",
+    "French": "fr-FR",
+    "German": "de-DE",
+    "Hindi": "hi-IN",
+    // Add more as needed
+  };
+  
 const languages = [
     "Auto-detect",
     "Afrikaans", "Albanian", "Amharic", "Arabic", "Armenian", "Assamese", "Aymara", "Azerbaijani", 
@@ -138,7 +147,8 @@ const ChatbotUI = () => {
     const [isStreaming, setIsStreaming] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const abortControllerRef = useRef(null);
-    
+    const [isSpeaking, setIsSpeaking] = useState(false);
+const speechSynthesisRef = useRef(null);
     // Add new state variables for microphone functionality
     const [isRecording, setIsRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState(null);
@@ -152,7 +162,51 @@ const ChatbotUI = () => {
             navigate('/auth/signin');
         }
     };
-
+    const speakText = (text) => {
+        // Cancel any existing speech
+        window.speechSynthesis.cancel();
+        
+        // Create a new utterance
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Set language based on selected language
+        if (language !== 'Auto-detect') {
+          // Map language name to BCP 47 language tag
+          const langMap = {
+            "English": "en-US",
+            "Spanish": "es-ES",
+            "French": "fr-FR",
+            "German": "de-DE",
+            "Hindi": "hi-IN",
+            "Chinese (Simplified)": "zh-CN",
+            "Japanese": "ja-JP",
+            "Korean": "ko-KR",
+            "Russian": "ru-RU",
+            "Arabic": "ar-SA",
+            "Italian": "it-IT",
+            "Portuguese (Portugal, Brazil)": "pt-BR"
+          };
+          
+          utterance.lang = langMap[language] || 'en-US';
+        }
+        
+        // Store reference to allow stopping speech later
+        speechSynthesisRef.current = utterance;
+        
+        // Set event handlers
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        
+        // Start speaking
+        window.speechSynthesis.speak(utterance);
+      };
+      
+      // Add this function to stop speech
+      const stopSpeaking = () => {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      };
     const handleLanguageSelect = (lang) => {
         setLanguage(lang);
         translateHey(lang);
@@ -211,7 +265,6 @@ const ChatbotUI = () => {
     };
 
     // Function to send recorded audio to backend
-// Function to send recorded audio to backend
 // Function to send recorded audio to backend
 const sendAudioToBackend = async (blob) => {
     try {
@@ -276,6 +329,8 @@ const sendAudioToBackend = async (blob) => {
             
             // Simulate streaming effect
             const words = parsedResponse.answer.split(' ');
+            speakText(parsedResponse.answer);
+
             for (let i = 0; i < words.length; i++) {
                 if (!shouldContinueStreaming.current) break;
                 await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
@@ -295,6 +350,9 @@ const sendAudioToBackend = async (blob) => {
                     const newMessages = [...prevMessages];
                     newMessages[newMessages.length - 1].bot = parsedResponse.answer;
                     newMessages[newMessages.length - 1].sources = parsedResponse.sources;
+                    
+                    // Speak the response for voice input
+                    
                     return newMessages;
                 });
             }
@@ -357,6 +415,8 @@ const sendAudioToBackend = async (blob) => {
     
             // Simulate streaming effect
             const words = parsedResponse.answer.split(' ');
+            speakText(parsedResponse.answer);
+
             for (let i = 0; i < words.length; i++) {
                 if (!shouldContinueStreaming.current) break;
                 await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
@@ -847,7 +907,23 @@ const sendAudioToBackend = async (blob) => {
                     >
                         {isRecording ? <MicOffIcon /> : <MicIcon />}
                     </IconButton>
-                    
+                    {isSpeaking && (
+  <IconButton
+    onClick={stopSpeaking}
+    sx={{
+      mx: 1,
+      bgcolor: '#FF8C00',
+      color: '#FFFFFF',
+      '&:hover': {
+        bgcolor: '#E67300',
+      },
+      borderRadius: '10px',
+      border: '1px solid #000000',
+    }}
+  >
+    <VolumeOffIcon />
+  </IconButton>
+)}
                     {/* Send/Stop button */}
                     {isStreaming ? (
                         <IconButton
