@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../contexts/user.context';
 import SendIcon from '@mui/icons-material/Send';
@@ -155,6 +155,7 @@ const speechSynthesisRef = useRef(null);
     const [recordingStatus, setRecordingStatus] = useState('');
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
+    const resumeTimerRef = useRef(null);
 
     const handleInputFocus = () => {
         if (!currentUser && !isRedirecting) {
@@ -162,51 +163,401 @@ const speechSynthesisRef = useRef(null);
             navigate('/auth/signin');
         }
     };
-    const speakText = (text) => {
-        // Cancel any existing speech
-        window.speechSynthesis.cancel();
+    useEffect(() => {
+        const logVoices = () => {
+          const voices = window.speechSynthesis.getVoices();
+          console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`));
+        };
         
-        // Create a new utterance
-        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.onvoiceschanged = logVoices;
         
-        // Set language based on selected language
-        if (language !== 'Auto-detect') {
-          // Map language name to BCP 47 language tag
-          const langMap = {
-            "English": "en-US",
-            "Spanish": "es-ES",
-            "French": "fr-FR",
-            "German": "de-DE",
-            "Hindi": "hi-IN",
-            "Chinese (Simplified)": "zh-CN",
-            "Japanese": "ja-JP",
-            "Korean": "ko-KR",
-            "Russian": "ru-RU",
-            "Arabic": "ar-SA",
-            "Italian": "it-IT",
-            "Portuguese (Portugal, Brazil)": "pt-BR"
-          };
-          
-          utterance.lang = langMap[language] || 'en-US';
+        // Try immediate loading too
+        logVoices();
+      }, []);
+    useEffect(() => {
+        // Load voices
+        const loadVoices = () => {
+            // This function will be called once the voices are loaded
+            window.speechSynthesis.getVoices();
+        };
+        
+        // Chrome and other browsers handle voice loading differently
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
         }
         
-        // Store reference to allow stopping speech later
-        speechSynthesisRef.current = utterance;
-        
-        // Set event handlers
-        utterance.onstart = () => setIsSpeaking(true);
-        utterance.onend = () => setIsSpeaking(false);
-        utterance.onerror = () => setIsSpeaking(false);
-        
-        // Start speaking
-        window.speechSynthesis.speak(utterance);
+        // Initial load attempt
+        loadVoices();
+    }, []);
+    // Add this to your useEffect section
+useEffect(() => {
+    // Define global state to track if voices are loaded
+    window.speechSynthesisVoicesLoaded = false;
+  
+    // Function to load voices and resolve when ready
+    const loadVoices = () => {
+        return new Promise((resolve) => {
+          // Get current voices
+          let voices = window.speechSynthesis.getVoices();
+          
+          // If voices already available, mark as loaded and resolve
+          if (voices && voices.length > 0) {
+            window.speechSynthesisVoicesLoaded = true;
+            console.log(`${voices.length} voices loaded successfully`);
+            resolve(voices);
+            return;
+          }
+          
+          // Handle voice loading differences across browsers
+          if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            // For Chrome and others that use onvoiceschanged event
+            window.speechSynthesis.onvoiceschanged = () => {
+              voices = window.speechSynthesis.getVoices();
+              if (voices.length > 0) {
+                window.speechSynthesisVoicesLoaded = true;
+                console.log(`${voices.length} voices loaded via onvoiceschanged`);
+                resolve(voices);
+              }
+            };
+          } else {
+            // For Safari and others without the event, try polling
+            const checkVoicesInterval = setInterval(() => {
+              voices = window.speechSynthesis.getVoices();
+              if (voices.length > 0) {
+                clearInterval(checkVoicesInterval);
+                window.speechSynthesisVoicesLoaded = true;
+                console.log(`${voices.length} voices loaded via polling`);
+                resolve(voices);
+              }
+            }, 100);
+            
+            // Set a timeout to prevent infinite polling
+            setTimeout(() => {
+              clearInterval(checkVoicesInterval);
+              console.warn("Voice loading timed out after 5 seconds");
+              resolve(window.speechSynthesis.getVoices() || []);
+            }, 5000);
+          }
+          
+          // Force an initial getVoices call to trigger loading
+          window.speechSynthesis.getVoices();
+        });
       };
+    
+    
+    // Call the function and log results
+    loadVoices().then(voices => {
+        // Log all available voices for debugging
+        console.log("Available voices:");
+        voices.forEach((voice, index) => {
+          console.log(`${index + 1}. ${voice.name} (${voice.lang})${voice.default ? ' - DEFAULT' : ''}`);
+          
+          // Detect likely male voices based on name
+          const maleKeywords = ['male', 'david', 'thomas', 'daniel', 'james', 'john', 'alex'];
+          const isMale = maleKeywords.some(keyword => voice.name.toLowerCase().includes(keyword.toLowerCase()));
+          if (isMale) {
+            console.log(`   Likely MALE voice: ${voice.name}`);
+          }
+        });
+      });    
+    // Browser-specific handling
+    const isChrome = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    const isEdge = /Edge/.test(navigator.userAgent);
+    
+    console.log(`Browser detected: ${isChrome ? 'Chrome' : isSafari ? 'Safari' : isEdge ? 'Edge' : 'Other'}`);
+    
+    // Clean up on component unmount
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+  const SPEECH_LANG_CODES = {
+    "English": "en-US",
+    "Spanish": "es-ES",
+    "French": "fr-FR",
+    "German": "de-DE",
+    "Hindi": "hi-IN",
+    "Chinese (Simplified)": "zh-CN",
+    "Chinese (Traditional)": "zh-TW",
+    "Japanese": "ja-JP",
+    "Korean": "ko-KR",
+    "Russian": "ru-RU",
+    "Arabic": "ar-SA",
+    "Portuguese (Portugal, Brazil)": "pt-BR",
+    "Italian": "it-IT",
+    "Dutch": "nl-NL",
+    "Polish": "pl-PL",
+    "Turkish": "tr-TR",
+    "Swedish": "sv-SE",
+    "Danish": "da-DK",
+    "Finnish": "fi-FI",
+    "Norwegian": "no-NO",
+    "Thai": "th-TH",
+    "Vietnamese": "vi-VN",
+    "Indonesian": "id-ID",
+    "Greek": "el-GR",
+    "Czech": "cs-CZ",
+    "Hebrew": "he-IL",
+    "Hungarian": "hu-HU",
+    "Romanian": "ro-RO",
+    "Ukrainian": "uk-UA",
+    // Add additional languages as needed
+  };
+  
+  // Known male voices by browser
+  const BROWSER_MALE_VOICES = {
+    chrome: [
+      { pattern: "Google US English Male", lang: "en-US" },
+      { pattern: "Microsoft David", lang: "en-US" },
+      { pattern: "Microsoft Mark", lang: "en-US" },
+      { pattern: "Microsoft George", lang: "en-GB" },
+      { pattern: "Google UK English Male", lang: "en-GB" },
+      // Spanish male voices
+      { pattern: "Microsoft Pablo", lang: "es" },
+      // French male voices
+      { pattern: "Google français Male", lang: "fr" },
+      { pattern: "Microsoft Paul", lang: "fr" },
+      // German male voices
+      { pattern: "Google Deutsch Male", lang: "de" },
+      { pattern: "Microsoft Stefan", lang: "de" },
+      // Add other languages as needed
+    ],
+    safari: [
+      { pattern: "Alex", lang: "en-US" }, // macOS system voice
+      { pattern: "Fred", lang: "en-US" },
+      { pattern: "Daniel", lang: "en-GB" },
+      { pattern: "Diego", lang: "es" },
+      { pattern: "Thomas", lang: "fr" },
+      { pattern: "Yannick", lang: "fr" },
+      { pattern: "Markus", lang: "de" },
+      // Add other languages as needed
+    ],
+    edge: [
+      { pattern: "Microsoft David", lang: "en-US" },
+      { pattern: "Microsoft Mark", lang: "en-US" },
+      { pattern: "Microsoft George", lang: "en-GB" },
+      { pattern: "Microsoft Pablo", lang: "es" },
+      { pattern: "Microsoft Paul", lang: "fr" },
+      { pattern: "Microsoft Stefan", lang: "de" },
+      // Edge often uses the same voices as Chrome
+      { pattern: "Google US English Male", lang: "en-US" },
+      { pattern: "Google UK English Male", lang: "en-GB" },
+      // Add other languages as needed
+    ],
+    firefox: [
+      // Firefox typically uses system voices
+      { pattern: "male", lang: "en" }, // Generic match for any "male" voice
+      { pattern: "Alex", lang: "en-US" }, // on macOS
+      { pattern: "Microsoft David", lang: "en-US" }, // on Windows
+      // Add other languages as needed
+    ]
+  };
+  const detectBrowser = () => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    if (userAgent.indexOf('edge') > -1 || userAgent.indexOf('edg') > -1) {
+      return 'edge';
+    } else if (userAgent.indexOf('chrome') > -1) {
+      return 'chrome';
+    } else if (userAgent.indexOf('safari') > -1) {
+      return 'safari';
+    } else if (userAgent.indexOf('firefox') > -1) {
+      return 'firefox';
+    }
+    return 'other';
+  };
+  const getBestMaleVoice = (voices, languagePreference) => {
+    if (!voices || voices.length === 0) return null;
+    
+    const browser = detectBrowser();
+    const langCode = SPEECH_LANG_CODES[languagePreference] || 'en-US';
+    const langBase = langCode.split('-')[0]; // e.g., "en" from "en-US"
+    
+    console.log(`Finding male voice for ${browser} browser in language ${langCode}`);
+    
+    // Get the list of known male voices for this browser
+    const knownMaleVoices = BROWSER_MALE_VOICES[browser] || [];
+    
+    // First try: exact matches from our known list with exact language match
+    for (const maleVoice of knownMaleVoices) {
+      if (maleVoice.lang === langCode) {
+        const exactMatch = voices.find(v => v.name.includes(maleVoice.pattern) && v.lang === langCode);
+        if (exactMatch) {
+          console.log(`Found exact match: ${exactMatch.name} (${exactMatch.lang})`);
+          return exactMatch;
+        }
+      }
+    }
+    
+    // Second try: language base matches (e.g., "en" instead of "en-US")
+    for (const maleVoice of knownMaleVoices) {
+      if (maleVoice.lang.startsWith(langBase)) {
+        const baseMatch = voices.find(v => 
+          v.name.includes(maleVoice.pattern) && v.lang.startsWith(langBase)
+        );
+        if (baseMatch) {
+          console.log(`Found language base match: ${baseMatch.name} (${baseMatch.lang})`);
+          return baseMatch;
+        }
+      }
+    }
+    
+    // Third try: any male voice in our preferred language
+    const maleKeywords = ['male', 'man', 'guy', 'david', 'thomas', 'daniel', 'james', 'john', 'alex'];
+    const languageMatch = voices.find(v => 
+      v.lang === langCode && 
+      maleKeywords.some(keyword => v.name.toLowerCase().includes(keyword.toLowerCase()))
+    );
+    
+    if (languageMatch) {
+      console.log(`Found male keyword match with exact language: ${languageMatch.name} (${languageMatch.lang})`);
+      return languageMatch;
+    }
+    
+    // Fourth try: any male voice in the language base
+    const baseLanguageMatch = voices.find(v => 
+      v.lang.startsWith(langBase) && 
+      maleKeywords.some(keyword => v.name.toLowerCase().includes(keyword.toLowerCase()))
+    );
+    
+    if (baseLanguageMatch) {
+      console.log(`Found male keyword match with language base: ${baseLanguageMatch.name} (${baseLanguageMatch.lang})`);
+      return baseLanguageMatch;
+    }
+    
+    // Fifth try: any of our known male voices, regardless of language
+    for (const maleVoice of knownMaleVoices) {
+      const anyMatch = voices.find(v => v.name.includes(maleVoice.pattern));
+      if (anyMatch) {
+        console.log(`Found male pattern match ignoring language: ${anyMatch.name} (${anyMatch.lang})`);
+        return anyMatch;
+      }
+    }
+    
+    // Last resort: any voice with male keywords
+    const anyMaleVoice = voices.find(v => 
+      maleKeywords.some(keyword => v.name.toLowerCase().includes(keyword.toLowerCase()))
+    );
+    
+    if (anyMaleVoice) {
+      console.log(`Found any male voice: ${anyMaleVoice.name} (${anyMaleVoice.lang})`);
+      return anyMaleVoice;
+    }
+    
+    // If all else fails, just return the first voice (or a default one if available)
+    const defaultVoice = voices.find(v => v.default) || voices[0];
+    console.log(`No male voice found, using default: ${defaultVoice.name} (${defaultVoice.lang})`);
+    return defaultVoice;
+  };
+  const speakText = (text) => {
+    // Cancel any existing speech
+    window.speechSynthesis.cancel();
+    
+    // Create a new utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Get available voices
+    let voices = window.speechSynthesis.getVoices();
+    
+    // If voices aren't loaded yet (happens in some browsers),
+    // try to wait for them or use default with lowered pitch as fallback
+    if (!voices || voices.length === 0) {
+      console.log("No voices available yet, waiting briefly...");
       
-      // Add this function to stop speech
+      // Try to force voices to load
+      window.speechSynthesis.getVoices();
+      
+      // Short timeout to see if voices load
+      setTimeout(() => {
+        voices = window.speechSynthesis.getVoices();
+        
+        if (!voices || voices.length === 0) {
+          console.log("Still no voices available, using default with male characteristics");
+          // Set a lower pitch to make default voice sound more masculine
+          utterance.pitch = 0.7;
+          utterance.rate = 0.9;
+          
+          // Start speaking
+          speechSynthesisRef.current = utterance;
+          utterance.onstart = () => setIsSpeaking(true);
+          utterance.onend = () => setIsSpeaking(false);
+          utterance.onerror = () => setIsSpeaking(false);
+          window.speechSynthesis.speak(utterance);
+        } else {
+          // Voices loaded after delay, proceed with voice selection
+          applyMaleVoice(utterance, voices);
+        }
+      }, 100);
+      
+      return;
+    }
+    
+    // If we have voices, proceed with voice selection
+    applyMaleVoice(utterance, voices);
+  };
+  
+  // Helper function to select and apply male voice
+// Fix the applyMaleVoice function to properly define and use resumeTimerRef
+const applyMaleVoice = (utterance, voices) => {
+    // Log available voices for debugging
+    console.log(`Found ${voices.length} available voices`);
+    
+    // Get the best male voice based on current browser and language
+    const maleVoice = getBestMaleVoice(voices, language);
+    
+    if (maleVoice) {
+      utterance.voice = maleVoice;
+      console.log(`Selected voice: ${maleVoice.name} (${maleVoice.lang})`);
+    } else {
+      console.log("No suitable male voice found, using default voice with male characteristics");
+    }
+    
+    // Set language based on selected language or fallback to English
+    const langCode = SPEECH_LANG_CODES[language] || 'en-US';
+    utterance.lang = langCode;
+    
+    // Apply male voice characteristics regardless of voice selection
+    utterance.pitch = 0.8; // Lower pitch (0.1 to 2) - makes voice sound more masculine
+    utterance.rate = 0.9;  // Slightly slower rate can help with male voice perception
+    
+    // Store reference to allow stopping speech later
+    speechSynthesisRef.current = utterance;
+    
+    // Set event handlers
+    utterance.onstart = () => setIsSpeaking(true);
+    // Add this function to stop speech
+    // Start speaking
+    window.speechSynthesis.speak(utterance);
+    
+    // Bug fix for Chrome's 15-second limit
+    if (!resumeTimerRef.current) {
+      resumeTimerRef.current = setInterval(() => {
+        if (!speechSynthesisRef.current) {
+          clearInterval(resumeTimerRef.current);
+          resumeTimerRef.current = null;
+          return;
+        }
+        
+        if (window.speechSynthesis.speaking) {
+          // Pause and resume to keep the speech going
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          clearInterval(resumeTimerRef.current);
+          resumeTimerRef.current = null;
+        }
+      }, 10000); // Check every 10 seconds
+    }
+  };
+  
+        // Clear interval when speech ends
       const stopSpeaking = () => {
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
       };
+
+      
+      // Add this function to stop speech
     const handleLanguageSelect = (lang) => {
         setLanguage(lang);
         translateHey(lang);
