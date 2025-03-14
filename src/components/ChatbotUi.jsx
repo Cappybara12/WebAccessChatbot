@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext,useEffect } from 'react';
+import React, { useState, useRef, useContext,useEffect,useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../contexts/user.context';
 import SendIcon from '@mui/icons-material/Send';
@@ -143,7 +143,8 @@ const ChatbotUI = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [heyText, setHeyText] = useState('hey');
-    
+    const safariIntervalRef = useRef(null);
+
     const [isStreaming, setIsStreaming] = useState(false);
     const [streamingMessage, setStreamingMessage] = useState('');
     const abortControllerRef = useRef(null);
@@ -156,7 +157,58 @@ const speechSynthesisRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
     const resumeTimerRef = useRef(null);
-
+    const detectBrowserDetails = () => {
+        const userAgent = navigator.userAgent.toLowerCase();
+        let browser = 'unknown';
+        let version = 'unknown';
+        
+        if (userAgent.indexOf('safari') !== -1) { 
+          if (userAgent.indexOf('chrome') > -1) {
+            browser = 'chrome';
+            const match = userAgent.match(/chrome\/(\d+)/);
+            version = match ? match[1] : 'unknown';
+          } else {
+            browser = 'safari';
+            const match = userAgent.match(/version\/(\d+)/);
+            version = match ? match[1] : 'unknown';
+          }
+        } else if (userAgent.indexOf('firefox') !== -1) {
+          browser = 'firefox';
+          const match = userAgent.match(/firefox\/(\d+)/);
+          version = match ? match[1] : 'unknown';
+        } else if (userAgent.indexOf('edge') !== -1 || userAgent.indexOf('edg') !== -1) {
+          browser = 'edge';
+          const match = userAgent.match(/edge\/(\d+)/) || userAgent.match(/edg\/(\d+)/);
+          version = match ? match[1] : 'unknown';
+        }
+        
+        const isIOS = /ipad|iphone|ipod/.test(userAgent) && !window.MSStream;
+        const isMacOS = /macintosh|mac os x/.test(userAgent);
+        
+        return {
+          browser,
+          version,
+          isIOS,
+          isMacOS,
+          isSafariOrIOS: browser === 'safari' || isIOS
+        };
+      };
+      
+// 2. If using with language selection, map your language name to language code first
+const speakResponse = (text, language) => {
+    // Get language code from selected language
+    const languageCode = SPEECH_LANG_CODES[language] || 'en-US';
+    
+    // Call the Safari-compatible function
+    speakTextSafariCompatible(text, languageCode)
+      .then(success => {
+        if (success) {
+          console.log("Speaking started successfully");
+        } else {
+          console.warn("Could not start speech");
+        }
+      });
+  };
     const handleInputFocus = () => {
         if (!currentUser && !isRedirecting) {
             setIsRedirecting(true);
@@ -174,21 +226,54 @@ const speechSynthesisRef = useRef(null);
         // Try immediate loading too
         logVoices();
       }, []);
-    useEffect(() => {
-        // Load voices
-        const loadVoices = () => {
-            // This function will be called once the voices are loaded
-            window.speechSynthesis.getVoices();
+      useEffect(() => {
+        return () => {
+          window.speechSynthesis.cancel();
+          if (safariIntervalRef.current) {
+            clearInterval(safariIntervalRef.current);
+          }
         };
-        
-        // Chrome and other browsers handle voice loading differently
-        if (window.speechSynthesis.onvoiceschanged !== undefined) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-        }
-        
-        // Initial load attempt
-        loadVoices();
-    }, []);
+      }, []);
+    
+      // Simplified voice loading - works better across browsers
+      const loadVoices = useCallback(() => {
+        return new Promise((resolve) => {
+          let hasResolved = false;
+          
+          const checkVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices && voices.length > 0 && !hasResolved) {
+              hasResolved = true;
+              resolve(voices);
+            }
+          };
+          
+          // Try immediately
+          checkVoices();
+          
+          // Set up event for Chrome
+          if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = checkVoices;
+          }
+          
+          // Safari fallback with polling
+          let attempts = 0;
+          const interval = setInterval(() => {
+            attempts++;
+            checkVoices();
+            
+            if (attempts >= 10 || hasResolved) {
+              clearInterval(interval);
+              if (!hasResolved) {
+                console.warn("Voice loading timed out");
+                hasResolved = true;
+                resolve(window.speechSynthesis.getVoices() || []);
+              }
+            }
+          }, 100);
+        });
+      }, []);
+    
     // Add this to your useEffect section
 useEffect(() => {
     // Define global state to track if voices are loaded
@@ -353,6 +438,14 @@ useEffect(() => {
       // Add other languages as needed
     ]
   };
+  useEffect(() => {
+    const browser = detectBrowserDetails();
+    console.log("Browser information:", browser);
+    // You can conditionally apply Safari-specific fixes here if needed
+    if (browser.isSafariOrIOS) {
+      console.log("Safari detected, applying special handling");
+    }
+  }, []);
   const detectBrowser = () => {
     const userAgent = navigator.userAgent.toLowerCase();
     if (userAgent.indexOf('edge') > -1 || userAgent.indexOf('edg') > -1) {
@@ -449,55 +542,90 @@ useEffect(() => {
     console.log(`No male voice found, using default: ${defaultVoice.name} (${defaultVoice.lang})`);
     return defaultVoice;
   };
-  const speakText = (text) => {
-    // Cancel any existing speech
+  // Replace your speakText function with this one
+  const speakText = useCallback(async (text) => {
+    // Always cancel any existing speech
     window.speechSynthesis.cancel();
-    
-    // Create a new utterance
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Get available voices
-    let voices = window.speechSynthesis.getVoices();
-    
-    // If voices aren't loaded yet (happens in some browsers),
-    // try to wait for them or use default with lowered pitch as fallback
-    if (!voices || voices.length === 0) {
-      console.log("No voices available yet, waiting briefly...");
-      
-      // Try to force voices to load
-      window.speechSynthesis.getVoices();
-      
-      // Short timeout to see if voices load
-      setTimeout(() => {
-        voices = window.speechSynthesis.getVoices();
-        
-        if (!voices || voices.length === 0) {
-          console.log("Still no voices available, using default with male characteristics");
-          // Set a lower pitch to make default voice sound more masculine
-          utterance.pitch = 0.7;
-          utterance.rate = 0.9;
-          
-          // Start speaking
-          speechSynthesisRef.current = utterance;
-          utterance.onstart = () => setIsSpeaking(true);
-          utterance.onend = () => setIsSpeaking(false);
-          utterance.onerror = () => setIsSpeaking(false);
-          window.speechSynthesis.speak(utterance);
-        } else {
-          // Voices loaded after delay, proceed with voice selection
-          applyMaleVoice(utterance, voices);
-        }
-      }, 100);
-      
-      return;
+    if (safariIntervalRef.current) {
+      clearInterval(safariIntervalRef.current);
+      safariIntervalRef.current = null;
     }
     
-    // If we have voices, proceed with voice selection
-    applyMaleVoice(utterance, voices);
-  };
+    if (!text) return;
+    
+    try {
+      setIsSpeaking(true);
+      
+      // Get language code from selected language
+      const langCode = SPEECH_LANG_CODES[language] || 'en-US';
+      
+      // Load voices reliably
+      const voices = await loadVoices();
+      
+      // Create utterance
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set language
+      utterance.lang = langCode;
+      
+      // Try to find a voice in the selected language
+      // Be less strict for Safari - just match the language base
+      const langBase = langCode.split('-')[0];
+      let selectedVoice = voices.find(v => v.lang.startsWith(langBase));
+      
+      // If no matching voice found, use default or first available
+      if (!selectedVoice && voices.length > 0) {
+        selectedVoice = voices.find(v => v.default) || voices[0];
+      }
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+        console.log(`Using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+      }
+      
+      // Apply male-like characteristics
+      utterance.pitch = 0.9;
+      utterance.rate = 0.95;
+      
+      // Event handlers
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        if (safariIntervalRef.current) {
+          clearInterval(safariIntervalRef.current);
+          safariIntervalRef.current = null;
+        }
+      };
+      
+      utterance.onerror = (error) => {
+        console.error("Speech error:", error);
+        setIsSpeaking(false);
+        if (safariIntervalRef.current) {
+          clearInterval(safariIntervalRef.current);
+          safariIntervalRef.current = null;
+        }
+      };
+      
+      // Start speaking
+      window.speechSynthesis.speak(utterance);
+      
+      // Safari workaround for the 15-second limit
+      // This keeps speech going by periodically pausing and resuming
+      safariIntervalRef.current = setInterval(() => {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          clearInterval(safariIntervalRef.current);
+          safariIntervalRef.current = null;
+        }
+      }, 5000);
+      
+    } catch (error) {
+      console.error("Speech error:", error);
+      setIsSpeaking(false);
+    }
+  }, [language, loadVoices,SPEECH_LANG_CODES]);
   
-  // Helper function to select and apply male voice
-// Fix the applyMaleVoice function to properly define and use resumeTimerRef
 const applyMaleVoice = (utterance, voices) => {
     // Log available voices for debugging
     console.log(`Found ${voices.length} available voices`);
@@ -551,12 +679,106 @@ const applyMaleVoice = (utterance, voices) => {
   };
   
         // Clear interval when speech ends
-      const stopSpeaking = () => {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-      };
-
-      
+        const stopSpeaking = useCallback(() => {
+            window.speechSynthesis.cancel();
+            if (safariIntervalRef.current) {
+              clearInterval(safariIntervalRef.current);
+              safariIntervalRef.current = null;
+            }
+            setIsSpeaking(false);
+          }, []);
+          const debugAndTestSpeech = () => {
+            const browser = detectBrowserDetails();
+            console.log("Browser details:", browser);
+            
+            // Force a direct user-initiated speech attempt
+            const testText = "This is a direct user interaction test. Speech in Safari requires direct user interaction.";
+            
+            // Cancel any existing speech
+            window.speechSynthesis.cancel();
+            
+            // Simple approach - try with minimal code
+            try {
+              const utterance = new SpeechSynthesisUtterance(testText);
+              utterance.lang = 'en-US';
+              utterance.rate = 0.9;
+              utterance.pitch = 0.9;
+              
+              utterance.onstart = () => console.log("Speech started successfully");
+              utterance.onend = () => console.log("Speech ended");
+              utterance.onerror = (e) => console.error("Speech error:", e);
+              
+              window.speechSynthesis.speak(utterance);
+              
+              // Safari workaround for the 15-second limit
+              const keepAlive = setInterval(() => {
+                if (window.speechSynthesis.speaking) {
+                  console.log("Keeping speech alive...");
+                  window.speechSynthesis.pause();
+                  window.speechSynthesis.resume();
+                } else {
+                  clearInterval(keepAlive);
+                }
+              }, 5000);
+              
+              return "Test initiated - check console for details";
+            } catch (error) {
+              console.error("Speech test error:", error);
+              return "Test failed - see console error";
+            }
+          };
+          
+          // Add a simple function for Safari that avoids all complexity
+          const safariSpeakSimple = (text) => {
+            // Cancel any existing speech
+            window.speechSynthesis.cancel();
+            
+            // Clear any existing timers
+            if (safariIntervalRef.current) {
+              clearInterval(safariIntervalRef.current);
+              safariIntervalRef.current = null;
+            }
+            
+            // Create a simple utterance - no voice selection
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 0.9;
+            
+            // Set event handlers
+            utterance.onstart = () => {
+              console.log("Speech started");
+              setIsSpeaking(true);
+            };
+            
+            utterance.onend = () => {
+              console.log("Speech ended");
+              setIsSpeaking(false);
+              if (safariIntervalRef.current) {
+                clearInterval(safariIntervalRef.current);
+                safariIntervalRef.current = null;
+              }
+            };
+            
+            utterance.onerror = (error) => {
+              console.error("Speech error:", error);
+              setIsSpeaking(false);
+            };
+            
+            // Speak the text
+            window.speechSynthesis.speak(utterance);
+            
+            // Start the keep-alive interval
+            safariIntervalRef.current = setInterval(() => {
+              if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.pause();
+                window.speechSynthesis.resume();
+              } else {
+                clearInterval(safariIntervalRef.current);
+                safariIntervalRef.current = null;
+              }
+            }, 5000);
+          };
+    
       // Add this function to stop speech
     const handleLanguageSelect = (lang) => {
         setLanguage(lang);
@@ -678,10 +900,19 @@ const sendAudioToBackend = async (blob) => {
                 return newMessages;
             });
             
+            // Choose the right speech method based on browser
+            const browser = detectBrowserDetails();
+            if (browser.browser === 'safari' || browser.isIOS) {
+                console.log("Using simplified Safari speech approach for voice response");
+                safariSpeakSimple(parsedResponse.answer);
+            } else {
+                console.log("Using standard speech approach for voice response");
+                speakText(parsedResponse.answer);
+            }
+            
             // Simulate streaming effect
             const words = parsedResponse.answer.split(' ');
-            speakText(parsedResponse.answer);
-
+            
             for (let i = 0; i < words.length; i++) {
                 if (!shouldContinueStreaming.current) break;
                 await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
@@ -701,9 +932,6 @@ const sendAudioToBackend = async (blob) => {
                     const newMessages = [...prevMessages];
                     newMessages[newMessages.length - 1].bot = parsedResponse.answer;
                     newMessages[newMessages.length - 1].sources = parsedResponse.sources;
-                    
-                    // Speak the response for voice input
-                    
                     return newMessages;
                 });
             }
@@ -720,86 +948,95 @@ const sendAudioToBackend = async (blob) => {
             return newMessages;
         });
     }
-};
+}; 
 
-    const handleSend = async () => {
-        if (!currentUser) {
-            handleInputFocus();
-            return;
+const handleSend = async () => {
+    if (!currentUser) {
+        handleInputFocus();
+        return;
+    }
+    if (!input.trim()) return;
+    
+    try {
+        const requestData = { query: input, include_web_access: includeWebAccess, language: language };
+        const requestBody = JSON.stringify({ body: JSON.stringify(requestData) });
+        setMessages([...messages, { user: input, bot: '' }]);
+        setInput('');
+        setIsLoading(true);
+        setIsStreaming(true);
+        setStreamingMessage('');
+        setIsGettingResponse(true);
+
+        shouldContinueStreaming.current = true;
+
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
+        const response = await fetch('https://ocjlkmkzvf.execute-api.us-east-1.amazonaws.com/prod/query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: requestBody,
+            signal,
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        if (!input.trim()) return;
-    
-        try {
-            const requestData = { query: input, include_web_access: includeWebAccess, language: language };
-            const requestBody = JSON.stringify({ body: JSON.stringify(requestData) });
-            setMessages([...messages, { user: input, bot: '' }]);
-            setInput('');
-            setIsLoading(true);
-            setIsStreaming(true);
-            setStreamingMessage('');
-            setIsGettingResponse(true);
-    
-            shouldContinueStreaming.current = true;
-    
-            abortControllerRef.current = new AbortController();
-            const signal = abortControllerRef.current.signal;
-    
-            const response = await fetch('https://ocjlkmkzvf.execute-api.us-east-1.amazonaws.com/prod/query', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: requestBody,
-                signal,
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-    
-            const data = await response.json();
-            const parsedResponse = JSON.parse(data.body);
-    
-            // Check if parsedResponse and parsedResponse.answer exist
-            if (!parsedResponse || typeof parsedResponse.answer !== 'string') {
-                throw new Error('Invalid response format');
-            }
-    
-            // Simulate streaming effect
-            const words = parsedResponse.answer.split(' ');
-            speakText(parsedResponse.answer);
 
-            for (let i = 0; i < words.length; i++) {
-                if (!shouldContinueStreaming.current) break;
-                await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
-                setStreamingMessage(prevMessage => {
-                    const newMessage = prevMessage + ' ' + words[i];
-                    if (i === 0) setIsGettingResponse(false);
-                    return newMessage;
-                });
-            }
-    
-            setIsLoading(false);
-            setIsStreaming(false);
-            if (shouldContinueStreaming.current) {
-                setMessages(prevMessages => {
-                    const newMessages = [...prevMessages];
-                    newMessages[newMessages.length - 1].bot = parsedResponse.answer;
-                    newMessages[newMessages.length - 1].sources = parsedResponse.sources;
-                    return newMessages;
-                });
-            }
-        } catch (error) {
-            console.error('Failed to send message:', error);
-            setIsLoading(false);
-            setIsStreaming(false);
-            setIsGettingResponse(false);
+        const data = await response.json();
+        const parsedResponse = JSON.parse(data.body);
+
+        // Check if parsedResponse and parsedResponse.answer exist
+        if (!parsedResponse || typeof parsedResponse.answer !== 'string') {
+            throw new Error('Invalid response format');
+        }
+
+        // Now use browser detection to choose the right speech approach
+        const browser = detectBrowserDetails();
+        if (browser.browser === 'safari' || browser.isIOS) {
+            console.log("Using simplified Safari speech approach");
+            safariSpeakSimple(parsedResponse.answer);
+        } else {
+            console.log("Using standard speech approach");
+            speakText(parsedResponse.answer);
+        }
+
+        // Simulate streaming effect
+        const words = parsedResponse.answer.split(' ');
+        
+        for (let i = 0; i < words.length; i++) {
+            if (!shouldContinueStreaming.current) break;
+            await new Promise(resolve => setTimeout(resolve, 50)); // Adjust delay as needed
+            setStreamingMessage(prevMessage => {
+                const newMessage = prevMessage + ' ' + words[i];
+                if (i === 0) setIsGettingResponse(false);
+                return newMessage;
+            });
+        }
+
+        setIsLoading(false);
+        setIsStreaming(false);
+        if (shouldContinueStreaming.current) {
             setMessages(prevMessages => {
                 const newMessages = [...prevMessages];
-                newMessages[newMessages.length - 1].bot = "Sorry, there was an error processing your request. Please try again.";
+                newMessages[newMessages.length - 1].bot = parsedResponse.answer;
+                newMessages[newMessages.length - 1].sources = parsedResponse.sources;
                 return newMessages;
             });
         }
-    };
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        setIsLoading(false);
+        setIsStreaming(false);
+        setIsGettingResponse(false);
+        setMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            newMessages[newMessages.length - 1].bot = "Sorry, there was an error processing your request. Please try again.";
+            return newMessages;
+        });
+    }
+};
     
     const formatMessage = (message) => {
         return message.split('\n').map((str, index) => (
@@ -969,7 +1206,114 @@ const sendAudioToBackend = async (blob) => {
             setHeyText(translations[lang] || 'hey');
         }
     };
+    const loadVoicesForSafari = () => {
+        return new Promise((resolve) => {
+          // Variable to track if we've already resolved
+          let hasResolved = false;
+          
+          // Function to check voices and resolve if they're available
+          const checkAndResolve = () => {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices && voices.length > 0 && !hasResolved) {
+              hasResolved = true;
+              console.log(`Loaded ${voices.length} voices successfully`);
+              resolve(voices);
+            }
+          };
+          
+          // First attempt - might work immediately in some browsers
+          checkAndResolve();
+          
+          // Set up the onvoiceschanged event (mainly for Chrome)
+          if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = checkAndResolve;
+          }
+          
+          // Safari fallback - poll a few times
+          const maxAttempts = 10;
+          let attempts = 0;
+          const safariInterval = setInterval(() => {
+            attempts++;
+            checkAndResolve();
+            
+            // Stop trying after max attempts
+            if (attempts >= maxAttempts || hasResolved) {
+              clearInterval(safariInterval);
+              
+              // If we still don't have voices, resolve with empty array
+              if (!hasResolved) {
+                console.warn("Could not load voices after multiple attempts");
+                hasResolved = true;
+                resolve(window.speechSynthesis.getVoices() || []);
+              }
+            }
+          }, 100);
+        });
+      };
+      
+      
+      const speakTextSafariCompatible = async (text, preferredLanguage = 'en-US') => {
+        // Always cancel any existing speech first
+        window.speechSynthesis.cancel();
         
+        // Create utterance object
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        try {
+          // Load voices with our reliable function
+          const voices = await loadVoicesForSafari();
+          
+          // Set language from preferred language
+          utterance.lang = preferredLanguage;
+          
+          // For Safari, we need to be less picky about voice selection
+          // First try: find a voice matching our preferred language
+          let selectedVoice = voices.find(voice => voice.lang.startsWith(preferredLanguage.split('-')[0]));
+          
+          // If that fails, just use the default voice
+          if (!selectedVoice && voices.length > 0) {
+            selectedVoice = voices.find(v => v.default) || voices[0];
+            console.log(`No matching voice for ${preferredLanguage}, using ${selectedVoice.name}`);
+          }
+          
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
+          
+          // Apply male-like characteristics
+          utterance.pitch = 0.9; // Slightly lower pitch
+          utterance.rate = 0.9;  // Slightly slower rate
+          
+          // Safari requires user interaction before allowing speech
+          // This function should only be called from a user-initiated event handler
+      
+          // Speaking event handlers
+          utterance.onstart = () => console.log("Speech started");
+          utterance.onend = () => console.log("Speech ended");
+          utterance.onerror = (e) => console.error("Speech error:", e);
+          
+          // Speak the text
+          window.speechSynthesis.speak(utterance);
+          
+          // Safari bug workaround - needs periodic resume
+          clearInterval(window.safariWorkaroundInterval);
+          window.safariWorkaroundInterval = setInterval(() => {
+            if (window.speechSynthesis.speaking) {
+              // This forces Safari to continue speaking
+              window.speechSynthesis.pause();
+              window.speechSynthesis.resume();
+            } else {
+              clearInterval(window.safariWorkaroundInterval);
+            }
+          }, 5000); // Check every 5 seconds
+          
+          return true;
+        } catch (error) {
+          console.error("Speech synthesis error:", error);
+          return false;
+        }
+      };
+      
     const handleSuggestionClick = (suggestion) => {
         setInput(suggestion);
     };
@@ -1318,10 +1662,19 @@ const sendAudioToBackend = async (blob) => {
                             onChange={(e) => setIncludeWebAccess(e.target.checked)}
                             color="primary"
                         />
+                        
                     }
                     label="Web Sources"
                     sx={{ marginTop: 0 }}
                 />
+                <Button 
+  onClick={debugAndTestSpeech} 
+  variant="outlined" 
+  size="small"
+  sx={{ marginTop: 1, marginLeft: 1 }}
+>
+  Test Speech
+</Button>
             </Container>
         </ThemeProvider>
     );
