@@ -22,7 +22,7 @@ const Navbar = () => {
             <Toolbar>
                 <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                     <img src={`${process.env.PUBLIC_URL}/Heybee.svg`} alt="Chatbot Logo" style={{ height: '40px', marginRight: '1px' }} />
-                    <img src={`${process.env.PUBLIC_URL}/newheybee.svg`} alt="Chatbot Logo" style={{ height: '30px', marginRight: '8px' }} />
+                    <img src={`${process.env.PUBLIC_URL}/Heybee1.jpg`} alt="Chatbot Logo" style={{ height: '30px', marginRight: '8px' }} />
                 </Box>
                 <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
                     <Button component={Link} to="/" sx={{ color: '#000000', textTransform: 'none' }}>Home</Button>
